@@ -1,0 +1,12 @@
+menuconfig MODULES_MY_DEMO
+	bool "my_demo"
+	default n
+	---help---
+		Enable support for my_demo
+
+menuconfig USER_MY_DEMO
+	bool "my_demo running as userspace module"
+	default y
+	depends on BOARD_PROTECTED && MODULES_MY_DEMO
+	---help---
+		Put my_demo in userspace memory

@@ -109,3 +109,12 @@ src/systemcmds/topic_listener/listener_generated.cpp
 # colcon
 log/
 keys/
+
+# Downloaded Xtensa toolchains
+/Tools/setup/xtensa-esp-elf-*.tar.xz
+
+# PX4 SITL runtime files generated in the repository root
+/dataman
+/etc
+/parameters.bson
+/parameters_backup.bson
