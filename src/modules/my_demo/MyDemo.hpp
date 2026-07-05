@@ -58,10 +58,20 @@ private:
 	void parameters_update(bool force);
 
 	uORB::SubscriptionCallbackWorkItem _local_pos_sub{this, ORB_ID(vehicle_local_position)};	/**< vehicle local position */
+	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
 	math::WelfordMean<float> _sample_interval_s{};
 
 	hrt_abstime _time_position_control_enabled{0};
 	hrt_abstime _time_stamp_last_loop{0};		/**< time stamp of last loop iteration */
 	perf_counter_t _cycle_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle time")};
+
+	DEFINE_PARAMETERS(
+		// demo
+		(ParamFloat<px4::params::MY_DEMO_FLOAT>) _param_my_demo_float,
+		(ParamInt<px4::params::MY_DEMO_BOOL>) _param_my_demo_bool
+	);
+
+	bool _demo_bool{false};
+	float _demo_float{0.0f};
 };

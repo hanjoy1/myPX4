@@ -36,6 +36,18 @@ bool MyDemo::init()
 
 void MyDemo::parameters_update(bool force)
 {
+	if (_parameter_update_sub.updated() || force) {
+		// clear update
+		parameter_update_s pupdate;
+		_parameter_update_sub.copy(&pupdate);
+
+		// update parameters from storage
+		ModuleParams::updateParams();
+
+		_demo_bool = _param_my_demo_bool.get();
+		_demo_float = _param_my_demo_float.get();
+	}
+
 }
 
 void MyDemo::Run()
@@ -48,10 +60,13 @@ void MyDemo::Run()
 	perf_begin(_cycle_perf);
 
 	// main
-	printf("Hello from my_demo module!\n");
+	if (_demo_bool) {
+		printf("Hello from my_demo module!\n");
+		printf("Demo float parameter value: %.2f\n", (double)_demo_float);
+	}
 
 	// reschedule backup
-	ScheduleDelayed(100_ms);
+	ScheduleDelayed(5000_ms);
 
 	parameters_update(false);
 
