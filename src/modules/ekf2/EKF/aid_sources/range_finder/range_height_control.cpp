@@ -37,6 +37,9 @@
  */
 
 #include "ekf.h"
+
+// 中文导读：测距高度融合控制。仅在倾角、量程、质量和运动一致性满足条件时使用数据，
+// 并区分“条件使用”和“始终使用”模式以及起降阶段的地面清障逻辑。
 #include "ekf_derivation/generated/compute_hagl_h.h"
 #include "ekf_derivation/generated/compute_hagl_innov_var.h"
 

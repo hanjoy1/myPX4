@@ -40,6 +40,9 @@
 
 #include "ekf.h"
 
+// 中文导读：融合双天线 GNSS 基线给出的航向。代码校正天线安装偏角，检查数据新鲜度
+// 和航向方差，并在首次对准或持续融合失败时重置主四元数航向。
+
 #include <mathlib/mathlib.h>
 #include <cstdlib>
 

@@ -33,6 +33,10 @@
 
 #include "EKFGSF_yaw.h"
 
+// 中文导读：这是独立于主 EKF 的应急航向估计器。它维护 5 个不同初始航向的
+// 三状态 EKF [v_N, v_E, yaw]，各自配有倾斜对准 AHRS；GNSS 水平速度创新的
+// 似然决定模型权重，最终由 Gaussian Sum Filter 合成无磁航向及其方差。
+
 #include <cstdlib>
 
 #include <lib/geo/geo.h> // CONSTANTS_ONE_G
@@ -66,6 +70,7 @@ void EKFGSF_yaw::reset()
 void EKFGSF_yaw::predict(const matrix::Vector3f &delta_ang, const float delta_ang_dt, const matrix::Vector3f &delta_vel,
 			 const float delta_vel_dt, bool in_air)
 {
+	// 所有模型使用同一份 IMU，但保留不同航向假设；先更新 AHRS，再传播三状态 EKF。
 	const Vector3f accel = delta_vel / delta_vel_dt;
 
 	if (delta_vel_dt > 0.001f) {
@@ -106,6 +111,7 @@ void EKFGSF_yaw::predict(const matrix::Vector3f &delta_ang, const float delta_an
 
 void EKFGSF_yaw::fuseVelocity(const Vector2f &vel_NE, const float vel_accuracy, const bool in_air)
 {
+	// N/E 速度通过速度-航向互协方差间接修正航向，各模型创新概率再更新 GSF 权重。
 	// we don't start running the EKF part of the algorithm until there are regular velocity observations
 	if (!_ekf_gsf_vel_fuse_started) {
 

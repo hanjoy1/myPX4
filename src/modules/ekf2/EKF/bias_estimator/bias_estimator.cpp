@@ -39,6 +39,9 @@
 
 #include "bias_estimator.hpp"
 
+// 中文导读：通用一维偏置卡尔曼滤波器，用随机游走模型预测偏置，并用传感器差值
+// 更新；高度/位置源切换时可吸收固定偏移，避免主状态突然跳变。
+
 void BiasEstimator::predict(const float dt)
 {
 	// State is constant

@@ -36,6 +36,10 @@
  *
  * Parameters defined by the fixed-wing attitude control task
  *
+ * 中文说明：固定翼姿态控制参数定义。
+ * 本文件参数主要影响姿态外环：滚转/俯仰时间常数、最大角速度限制、
+ * 手动姿态角限制、手动偏航角速度叠加量，以及跑道前轮转向控制器参数。
+ *
  * @author Lorenz Meier <lorenz@px4.io>
  * @author Thomas Gubler <thomas@px4.io>
  */

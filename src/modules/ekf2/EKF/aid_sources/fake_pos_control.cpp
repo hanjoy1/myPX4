@@ -38,6 +38,9 @@
 
 #include "ekf.h"
 
+// 中文导读：无水平位置辅助时融合“最后已知位置”的宽噪声假观测，目的不是导航，
+// 而是限制状态和协方差无限漂移，使滤波器保持数值可用。
+
 void Ekf::controlFakePosFusion()
 {
 	auto &aid_src = _aid_src_fake_pos;

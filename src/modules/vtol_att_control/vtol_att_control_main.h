@@ -138,6 +138,10 @@ public:
 	struct vehicle_land_detected_s			*get_land_detected() {return &_land_detected;}
 	struct vehicle_local_position_s 		*get_local_pos() {return &_local_pos;}
 	struct vehicle_local_position_setpoint_s	*get_local_pos_sp() {return &_local_pos_sp;}
+	/*
+	 * 向 VtolType/Tailsitter 暴露最终输出对象的地址，而不是返回副本。
+	 * 派生类 fill_actuator_outputs() 通过这些指针写入；Run() 随后发布下方同名实际对象。
+	 */
 	struct vehicle_torque_setpoint_s 		*get_torque_setpoint_0() {return &_torque_setpoint_0;}
 	struct vehicle_torque_setpoint_s 		*get_torque_setpoint_1() {return &_torque_setpoint_1;}
 	struct vehicle_thrust_setpoint_s 		*get_thrust_setpoint_0() {return &_thrust_setpoint_0;}
@@ -175,6 +179,8 @@ private:
 	uORB::Publication<normalized_unsigned_setpoint_s>	_flaps_setpoint_pub{ORB_ID(flaps_setpoint)};
 	uORB::Publication<normalized_unsigned_setpoint_s>	_spoilers_setpoint_pub{ORB_ID(spoilers_setpoint)};
 	uORB::Publication<vehicle_attitude_setpoint_s>		_vehicle_attitude_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
+	// 同一 uORB topic 的多实例发布：instance 0 通常对应电机，instance 1 通常对应气动舵面。
+	// control_allocator 分别订阅两个实例，并用不同 effectiveness matrix 完成分配。
 	uORB::PublicationMulti<vehicle_thrust_setpoint_s>	_vehicle_thrust_setpoint0_pub{ORB_ID(vehicle_thrust_setpoint)};
 	uORB::PublicationMulti<vehicle_thrust_setpoint_s>	_vehicle_thrust_setpoint1_pub{ORB_ID(vehicle_thrust_setpoint)};
 	uORB::PublicationMulti<vehicle_torque_setpoint_s>	_vehicle_torque_setpoint0_pub{ORB_ID(vehicle_torque_setpoint)};
@@ -192,10 +198,11 @@ private:
 	vehicle_thrust_setpoint_s		_vehicle_thrust_setpoint_virtual_mc{};
 	vehicle_thrust_setpoint_s		_vehicle_thrust_setpoint_virtual_fw{};
 
-	vehicle_torque_setpoint_s		_torque_setpoint_0{};
-	vehicle_torque_setpoint_s		_torque_setpoint_1{};
-	vehicle_thrust_setpoint_s		_thrust_setpoint_0{};
-	vehicle_thrust_setpoint_s		_thrust_setpoint_1{};
+	// 最终待发布消息的唯一存储位置。VtolType 中同名成员只是指向这里的指针。
+	vehicle_torque_setpoint_s		_torque_setpoint_0{}; // 电机控制实例的三轴力矩
+	vehicle_torque_setpoint_s		_torque_setpoint_1{}; // 舵面控制实例的三轴力矩
+	vehicle_thrust_setpoint_s		_thrust_setpoint_0{}; // 电机控制实例的推力
+	vehicle_thrust_setpoint_s		_thrust_setpoint_1{}; // 舵面实例推力，尾座式通常保持零
 
 	position_setpoint_triplet_s		_pos_sp_triplet{};
 	tecs_status_s				_tecs_status{};

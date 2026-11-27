@@ -33,12 +33,16 @@
 
 #include "ekf.h"
 
+// 中文导读：主姿态状态是四元数，而磁航向、GNSS yaw 和视觉 yaw 是标量。
+// 本文件计算航向观测雅可比，并把航向误差安全地注入四元数及其协方差。
+
 #include <ekf_derivation/generated/compute_yaw_innov_var_and_h.h>
 
 #include <mathlib/mathlib.h>
 
 bool Ekf::fuseYaw(estimator_aid_source1d_s &aid_src_status, const VectorState &H_YAW, bool reset)
 {
+	// 航向创新必须限制到 [-pi, pi]；reset 通常只用于初始对准或故障恢复。
 	// check if the innovation variance calculation is badly conditioned
 	if (aid_src_status.innovation_variance >= aid_src_status.observation_variance) {
 		// the innovation variance contribution from the state covariances is not negative, no fault
@@ -122,6 +126,7 @@ void Ekf::computeYawInnovVarAndH(float observation_variance, float &innovation_v
 
 void Ekf::resetQuatStateYaw(const float yaw, const float yaw_variance)
 {
+	// 只替换航向并保留横滚/俯仰，再将相关协方差变换到重置后的误差坐标。
 	// save a copy of the quaternion state for later use in calculating the amount of reset change
 	const Quatf quat_before_reset = _state.quat_nominal;
 

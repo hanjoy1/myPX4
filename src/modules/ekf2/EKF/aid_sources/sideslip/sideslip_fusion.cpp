@@ -42,6 +42,9 @@
  */
 
 #include "ekf.h"
+
+// 中文导读：固定翼协调飞行时假设侧滑角 beta 约为零。这个伪观测把机体系横向空速
+// 约束为零，从而在没有直接风速测量时提高水平风状态的可观性。
 #include <ekf_derivation/generated/compute_sideslip_innov_and_innov_var.h>
 #include <ekf_derivation/generated/compute_sideslip_h.h>
 

@@ -87,6 +87,12 @@ static constexpr fixed_wing_longitudinal_setpoint_s empty_longitudinal_control_s
 class FwLateralLongitudinalControl final : public ModuleBase<FwLateralLongitudinalControl>, public ModuleParams,
 	public px4::WorkItem
 {
+	/*
+	 * 固定翼外环控制器封装。
+	 *
+	 * 读取 FixedWingModeManager 生成的横向/纵向 setpoint 以及飞机状态估计，
+	 * 输出 vehicle_attitude_setpoint 给姿态控制器。
+	 */
 public:
 	FwLateralLongitudinalControl(bool is_vtol);
 

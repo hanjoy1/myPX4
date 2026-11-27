@@ -1,0 +1,4 @@
+set debuginfod enabled off
+set pagination off
+set auto-solib-add off
+set stop-on-solib-events 0

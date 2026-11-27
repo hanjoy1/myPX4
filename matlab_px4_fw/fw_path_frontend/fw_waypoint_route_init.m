@@ -1,0 +1,6 @@
+function state = fw_waypoint_route_init()
+%FW_WAYPOINT_ROUTE_INIT Initial state for multi-waypoint route tracking.
+state = struct( ...
+    'segment_index', uint16(1), ...
+    'finished', false);
+end

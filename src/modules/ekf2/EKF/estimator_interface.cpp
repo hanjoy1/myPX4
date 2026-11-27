@@ -42,6 +42,10 @@
 
 #include "estimator_interface.h"
 
+// 中文导读：这是传感器数据与 Ekf 算法之间的时间接口。所有 set*Data() 将带
+// 时间戳的观测写入环形缓冲区，主滤波器再按延迟融合时刻取出匹配数据；最新 IMU
+// 还会立即驱动 OutputPredictor，以维持低延迟输出。
+
 #include <mathlib/mathlib.h>
 
 EstimatorInterface::~EstimatorInterface()

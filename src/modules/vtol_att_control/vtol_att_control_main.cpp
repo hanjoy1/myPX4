@@ -65,6 +65,8 @@ VtolAttitudeControl::VtolAttitudeControl() :
 	parameters_update();
 
 	if (static_cast<vtol_type>(_param_vt_type.get()) == vtol_type::TAILSITTER) {
+		// VT_TYPE=0：创建尾座式策略对象，并把当前主模块 this 指针传入。
+		// Tailsitter 的 VtolType 基类会保存主模块各消息对象的地址，主循环仍拥有这些对象的生命周期。
 		_vtol_type = new Tailsitter(this);
 
 	} else if (static_cast<vtol_type>(_param_vt_type.get()) == vtol_type::TILTROTOR) {
@@ -258,6 +260,12 @@ VtolAttitudeControl::update_callbacks()
 {
 	mode current_vtol_mode = _vtol_type->get_mode();
 
+	/*
+	 * 用当前真正起作用的 rate controller 输出驱动本 WorkItem：
+	 * - Tailsitter MC/前转换/后转换均由 MC 姿态和 rate 控制器执行；
+	 * - 稳定 FW 才改由 FW rate 输出触发；
+	 * - 转换期间仍允许 MC/FW 任一虚拟输出更新时运行，以及时完成接管和舵面输出。
+	 */
 	switch (current_vtol_mode) {
 	case mode::TRANSITION_TO_FW:
 	case mode::TRANSITION_TO_MC:
@@ -318,6 +326,7 @@ VtolAttitudeControl::Run()
 	updated_fw_in |= _vehicle_thrust_setpoint_virtual_fw_sub.update(&_vehicle_thrust_setpoint_virtual_fw);
 	bool updated_mc_in = _vehicle_torque_setpoint_virtual_mc_sub.update(&_vehicle_torque_setpoint_virtual_mc);
 	updated_mc_in |= _vehicle_thrust_setpoint_virtual_mc_sub.update(&_vehicle_thrust_setpoint_virtual_mc);
+	// 上述四个对象是主模块中的实际缓存；VtolType/Tailsitter 内保存的指针正指向这些缓存。
 
 	// run on actuator publications corresponding to VTOL mode
 	bool should_run = false;
@@ -393,11 +402,13 @@ VtolAttitudeControl::Run()
 
 		_vtol_type->handleEkfResets();
 
-		// check if mc and fw sp were updated
+		// 读取两套候选姿态目标：
+		// MC 虚拟目标来自多旋翼控制链，FW 虚拟目标来自固定翼横纵向控制链。
 		const bool mc_att_sp_updated = _mc_virtual_att_sp_sub.update(&_mc_virtual_att_sp);
 		const bool fw_att_sp_updated = _fw_virtual_att_sp_sub.update(&_fw_virtual_att_sp);
 
 		// update the vtol state machine which decides which mode we are in
+		// 对尾座式实际调用 Tailsitter::update_vtol_state()，决定 MC/前转换/FW/后转换。
 		_vtol_type->update_vtol_state();
 
 		// check in which mode we are in and call mode specific functions
@@ -407,7 +418,9 @@ VtolAttitudeControl::Run()
 			_vtol_vehicle_status.vehicle_vtol_state = vtol_vehicle_status_s::VEHICLE_VTOL_STATE_TRANSITION_TO_FW;
 
 			if (mc_att_sp_updated || fw_att_sp_updated) {
+				// 尾座式在此生成随时间俯转的 q_trans_sp，并使用 MC 的 body-Z 推力。
 				_vtol_type->update_transition_state();
+				// _vehicle_attitude_sp 与派生类中的 _v_att_sp 指针指向同一个对象。
 				_vehicle_attitude_sp_pub.publish(_vehicle_attitude_sp);
 			}
 
@@ -418,6 +431,7 @@ VtolAttitudeControl::Run()
 			_vtol_vehicle_status.vehicle_vtol_state = vtol_vehicle_status_s::VEHICLE_VTOL_STATE_TRANSITION_TO_MC;
 
 			if (mc_att_sp_updated || fw_att_sp_updated) {
+				// 尾座式在此生成抬头回竖直的 q_trans_sp，并平滑混合 FW/MC 推力。
 				_vtol_type->update_transition_state();
 				_vehicle_attitude_sp_pub.publish(_vehicle_attitude_sp);
 			}
@@ -429,6 +443,7 @@ VtolAttitudeControl::Run()
 			_vtol_vehicle_status.vehicle_vtol_state = vtol_vehicle_status_s::VEHICLE_VTOL_STATE_MC;
 
 			if (mc_att_sp_updated) {
+				// 稳定悬停：基类直接把 mc_virtual_attitude_setpoint 复制为最终姿态目标。
 				_vtol_type->update_mc_state();
 				_vehicle_attitude_sp_pub.publish(_vehicle_attitude_sp);
 			}
@@ -440,6 +455,7 @@ VtolAttitudeControl::Run()
 			_vtol_vehicle_status.vehicle_vtol_state = vtol_vehicle_status_s::VEHICLE_VTOL_STATE_FW;
 
 			if (fw_att_sp_updated) {
+				// 稳定固定翼：复制 FW 姿态目标，并处理 TECS 刚接管时的推力保持/混合。
 				_vtol_type->update_fw_state();
 				_vehicle_attitude_sp_pub.publish(_vehicle_attitude_sp);
 			}
@@ -447,8 +463,17 @@ VtolAttitudeControl::Run()
 			break;
 		}
 
+		/*
+		 * 根据构型和状态把 virtual_mc / virtual_fw 的 torque、thrust 写入最终 instance 0/1。
+		 * 对尾座式实际调用 Tailsitter::fill_actuator_outputs()。
+		 *
+		 * 这里没有显式传入 _thrust_setpoint_0 等参数，是因为派生类在构造时已保存它们的地址。
+		 * 因而函数结束时，下方四个主模块成员对象已经被原地填写。
+		 */
 		_vtol_type->fill_actuator_outputs();
 
+		// 发布刚才由 Tailsitter 通过共享指针填好的同一批对象：
+		// instance 0 主要进入电机分配，instance 1 主要进入气动舵面分配。
 		_vehicle_thrust_setpoint0_pub.publish(_thrust_setpoint_0);
 		_vehicle_thrust_setpoint1_pub.publish(_thrust_setpoint_1);
 		_vehicle_torque_setpoint0_pub.publish(_torque_setpoint_0);

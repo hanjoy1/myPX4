@@ -38,6 +38,9 @@
 
 #include "ekf.h"
 
+// 中文导读：没有可用高度源时提供弱垂直位置约束，防止高度和方差无界增长；
+// 真实高度源恢复后由其重新接管。
+
 void Ekf::controlFakeHgtFusion()
 {
 	auto &aid_src = _aid_src_fake_hgt;

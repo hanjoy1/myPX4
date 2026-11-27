@@ -37,6 +37,9 @@
  */
 
 #include "ekf.h"
+
+// 中文导读：多旋翼阻力融合利用水平比力与相对空气速度之间的阻力模型估计风。
+// X/Y 轴弹道系数和动量阻力参数决定观测预测，机动充分时风状态才可观。
 #include <ekf_derivation/generated/compute_drag_x_innov_var_and_h.h>
 #include <ekf_derivation/generated/compute_drag_y_innov_var_and_h.h>
 

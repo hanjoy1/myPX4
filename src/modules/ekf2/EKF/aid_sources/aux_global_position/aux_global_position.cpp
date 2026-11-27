@@ -33,6 +33,9 @@
 
 #include "ekf.h"
 
+// 中文导读：GNSS 之外的经纬高定位输入。负责质量检查、地图投影、偏置管理，
+// 以及来源失效后的融合停止和 reset 策略。
+
 #include "aid_sources/aux_global_position/aux_global_position.hpp"
 
 #if defined(CONFIG_EKF2_AUX_GLOBAL_POSITION) && defined(MODULE_NAME)

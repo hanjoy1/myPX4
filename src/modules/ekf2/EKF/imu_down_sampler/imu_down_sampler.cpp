@@ -1,5 +1,8 @@
 #include "imu_down_sampler/imu_down_sampler.hpp"
 
+// 中文导读：原始 IMU 频率通常高于 EKF 预测频率。本类累积角增量和速度增量，
+// 并补偿累积期间的机体旋转，使降采样后的 delta_vel 位于一致的旋转参考系。
+
 #include <lib/mathlib/mathlib.h>
 
 ImuDownSampler::ImuDownSampler(int32_t &target_dt_us) : _target_dt_us(target_dt_us)
@@ -12,6 +15,7 @@ ImuDownSampler::ImuDownSampler(int32_t &target_dt_us) : _target_dt_us(target_dt_
 // returns true if target dt is reached
 bool ImuDownSampler::update(const imuSample &imu_sample_new)
 {
+	// 角增量用旋转组合累积，不能简单逐元素相加；速度增量同时进行划桨效应近似补偿。
 	_delta_ang_dt_avg = 0.9f * _delta_ang_dt_avg + 0.1f * imu_sample_new.delta_ang_dt;
 
 	// accumulate time deltas

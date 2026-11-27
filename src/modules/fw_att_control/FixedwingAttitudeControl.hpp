@@ -77,6 +77,14 @@ using namespace time_literals;
 class FixedwingAttitudeControl final : public ModuleBase<FixedwingAttitudeControl>, public ModuleParams,
 	public px4::ScheduledWorkItem
 {
+	/*
+	 * 固定翼姿态环模块封装。
+	 *
+	 * 订阅 vehicle_attitude、vehicle_attitude_setpoint、vehicle_control_mode、
+	 * vehicle_status、manual_control_setpoint 和 airspeed_validated。
+	 * 主要发布 vehicle_rates_setpoint 给 fw_rate_control；跑道轮转向时还会发布
+	 * landing_gear_wheel。
+	 */
 public:
 	FixedwingAttitudeControl(bool vtol = false);
 	~FixedwingAttitudeControl() override;

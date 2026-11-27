@@ -32,6 +32,9 @@
  ****************************************************************************/
 
 #include "ekf.h"
+
+// 中文导读：测距仪测得沿波束方向的距离，经倾角补偿后形成 HAGL 观测；根据当前
+// 高度参考配置，它可以更新飞行器垂直位置、地形高度或二者之间的相对关系。
 #include "ekf_derivation/generated/compute_hagl_h.h"
 
 bool Ekf::fuseHaglRng(estimator_aid_source1d_s &aid_src, bool update_height, bool update_terrain)

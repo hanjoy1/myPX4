@@ -35,6 +35,10 @@
  * @file control.cpp
  * Control functions for ekf attitude and position estimator.
  *
+ * 中文导读：这是 EKF 的融合调度器，不直接定义某一种观测方程。
+ * controlFusionModes() 按顺序调用各传感器控制器，并维护对准、静止、在空中、
+ * 惯性失算和状态重置等全局条件。
+ *
  * @author Paul Riseborough <p_riseborough@live.com.au>
  *
  */
@@ -45,7 +49,7 @@
 
 void Ekf::controlFusionModes(const imuSample &imu_delayed)
 {
-	// Store the status to enable change detection
+	// 保存上一周期状态，用于检测融合模式切换和状态 reset 事件。
 	_control_status_prev.value = _control_status.value;
 	_state_reset_count_prev = _state_reset_status.reset_count;
 
@@ -67,7 +71,7 @@ void Ekf::controlFusionModes(const imuSample &imu_delayed)
 		}
 	}
 
-	// monitor the tilt alignment
+	// 倾斜对准完成的判据是姿态方差足够小，而不是简单等待固定时间。
 	if (!_control_status.flags.tilt_align) {
 		// whilst we are aligning the tilt, monitor the variances
 		// Once the tilt variances have reduced to equivalent of 3 deg uncertainty
@@ -103,7 +107,7 @@ void Ekf::controlFusionModes(const imuSample &imu_delayed)
 	}
 
 #if defined(CONFIG_EKF2_MAGNETOMETER)
-	// control use of observations for aiding
+	// 以下顺序就是一个 EKF 周期内各观测源的调度顺序；编译配置会裁掉未使用的传感器。
 	controlMagFusion(imu_delayed);
 #endif // CONFIG_EKF2_MAGNETOMETER
 

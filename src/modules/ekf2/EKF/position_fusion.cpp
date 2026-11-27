@@ -33,6 +33,9 @@
 
 #include "ekf.h"
 
+// 中文导读：这是与传感器类型无关的位置更新层。传感器控制器完成坐标变换和
+// 质量检查后调用这里；位置 reset 还会同步输出预测器和 reset 计数器。
+
 void Ekf::updateVerticalPositionAidStatus(estimator_aid_source1d_s &aid_src, const uint64_t &time_us,
 		const float observation, const float observation_variance, const float innovation_gate) const
 {
@@ -55,6 +58,7 @@ void Ekf::updateVerticalPositionAidStatus(estimator_aid_source1d_s &aid_src, con
 
 bool Ekf::fuseHorizontalPosition(estimator_aid_source2d_s &aid_src)
 {
+	// N、E 两轴依次执行标量更新，后一轴使用前一轴更新后的协方差。
 	// x & y
 	if (!aid_src.innovation_rejected) {
 		for (unsigned i = 0; i < 2; i++) {

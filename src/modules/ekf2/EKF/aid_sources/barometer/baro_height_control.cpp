@@ -38,6 +38,9 @@
 
 #include "ekf.h"
 
+// 中文导读：气压高度融合控制。它补偿地面效应和静压位置误差，估计气压高度偏置，
+// 生成垂直位置创新，并处理气压计作为主高度参考时的故障恢复。
+
 void Ekf::controlBaroHeightFusion(const imuSample &imu_sample)
 {
 	static constexpr const char *HGT_SRC_NAME = "baro";

@@ -38,6 +38,9 @@
 
 #include "ekf.h"
 
+// 中文导读：使用视觉 Z 位置辅助高度，维护视觉高度偏置并处理参考源切换；
+// 最终通过通用垂直位置融合函数更新主状态。
+
 void Ekf::controlEvHeightFusion(const imuSample &imu_sample, const extVisionSample &ev_sample,
 				const bool common_starting_conditions_passing, const bool ev_reset, const bool quality_sufficient,
 				estimator_aid_source1d_s &aid_src)

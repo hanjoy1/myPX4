@@ -34,6 +34,9 @@
 /**
  * @file fw_wheel_controller.h
  * Definition of a simple wheel controller.
+ *
+ * 中文说明：跑道地面转向轮控制器接口。
+ * 用于自动跑道起飞/降落期间的航向保持，输出归一化前轮转向控制量。
  */
 #ifndef FW_WHEEL_CONTROLLER_H
 #define FW_WHEEL_CONTROLLER_H

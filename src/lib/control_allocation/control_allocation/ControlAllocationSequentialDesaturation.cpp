@@ -40,6 +40,7 @@
 
 #include "ControlAllocationSequentialDesaturation.hpp"
 
+#include <stdio.h>
 
 void
 ControlAllocationSequentialDesaturation::allocate()
@@ -62,6 +63,7 @@ ControlAllocationSequentialDesaturation::allocate()
 		mixAirmodeDisabled();
 		break;
 	}
+
 }
 
 void ControlAllocationSequentialDesaturation::desaturateActuators(

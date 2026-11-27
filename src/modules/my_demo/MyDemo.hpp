@@ -27,7 +27,8 @@
 #include <uORB/topics/vehicle_land_detected.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_local_position_setpoint.h>
-
+#include <uORB/topics/my_demo.h>
+#include <uORB/topics/vehicle_status.h>
 using namespace time_literals;
 
 class MyDemo : public ModuleBase<MyDemo>, public ModuleParams,
@@ -56,15 +57,19 @@ private:
 	 * @param force forces parameter update.
 	 */
 	void parameters_update(bool force);
+	uORB::Publication<my_demo_s> _my_demo_pub{ORB_ID(my_demo)};
 
 	uORB::SubscriptionCallbackWorkItem _local_pos_sub{this, ORB_ID(vehicle_local_position)};	/**< vehicle local position */
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
+	uORB::Subscription _my_demo_sub{ORB_ID(vehicle_status)};
 
 	math::WelfordMean<float> _sample_interval_s{};
 
-	hrt_abstime _time_position_control_enabled{0};
-	hrt_abstime _time_stamp_last_loop{0};		/**< time stamp of last loop iteration */
-	perf_counter_t _cycle_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle time")};
+		hrt_abstime _time_position_control_enabled{0};
+		hrt_abstime _time_stamp_last_loop{0};		/**< time stamp of last loop iteration */
+		hrt_abstime _last_demo_print{0};
+		hrt_abstime _last_status_print{0};
+		perf_counter_t _cycle_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle time")};
 
 	DEFINE_PARAMETERS(
 		// demo

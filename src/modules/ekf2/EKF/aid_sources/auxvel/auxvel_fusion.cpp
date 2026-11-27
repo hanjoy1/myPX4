@@ -33,6 +33,9 @@
 
 #include "ekf.h"
 
+// 中文导读：通用辅助三维速度输入。这里处理启停、创新门限和超时，并复用
+// velocity_fusion.cpp 更新主速度状态。
+
 void Ekf::controlAuxVelFusion(const imuSample &imu_sample)
 {
 	if (_auxvel_buffer) {

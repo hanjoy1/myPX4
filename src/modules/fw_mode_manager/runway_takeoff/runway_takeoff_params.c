@@ -36,6 +36,9 @@
  *
  * Parameters for runway takeoff
  *
+ * 中文说明：固定翼跑道起飞参数定义。
+ * 这些参数决定跑道滑跑期间的油门爬升、抬轮空速、滑跑俯仰角和爬升离地逻辑。
+ *
  * @author Andreas Antener <andreas@uaventure.com>
  */
 

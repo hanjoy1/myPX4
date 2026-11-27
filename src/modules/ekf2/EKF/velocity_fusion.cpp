@@ -33,6 +33,9 @@
 
 #include "ekf.h"
 
+// 中文导读：GNSS、外部视觉和辅助速度等观测在完成各自检查后，共享这里的
+// NED 速度融合与 reset 函数，因此本文件不关心速度观测来自哪一种传感器。
+
 bool Ekf::fuseHorizontalVelocity(estimator_aid_source2d_s &aid_src)
 {
 	// vx, vy
@@ -56,6 +59,7 @@ bool Ekf::fuseHorizontalVelocity(estimator_aid_source2d_s &aid_src)
 
 bool Ekf::fuseVelocity(estimator_aid_source3d_s &aid_src)
 {
+	// 三轴顺序更新可复用稳定的一维更新，并允许异常轴被单独拒绝。
 	// vx, vy, vz
 	if (!aid_src.innovation_rejected) {
 		for (unsigned i = 0; i < 3; i++) {

@@ -62,16 +62,27 @@ VtolType::VtolType(VtolAttitudeControl *att_controller) :
 	_attc(att_controller),
 	_common_vtol_mode(mode::ROTARY_WING)
 {
+	/*
+	 * 这里建立“主模块拥有对象、VTOL 类型持有指针”的共享关系。
+	 *
+	 * 例如：
+	 *   _attc->get_thrust_setpoint_0()
+	 * 返回 VtolAttitudeControl::_thrust_setpoint_0 的地址；
+	 * 本类的 _thrust_setpoint_0 保存该地址。Tailsitter 经由 -> 写入后，
+	 * 主模块中的实际对象已经同步改变，随后可直接 publish，无需返回值或拷贝。
+	 */
 	_v_att = _attc->get_att();
 	_v_att_sp = _attc->get_att_sp();
 	_mc_virtual_att_sp = _attc->get_mc_virtual_att_sp();
 	_fw_virtual_att_sp = _attc->get_fw_virtual_att_sp();
 	_v_control_mode = _attc->get_control_mode();
 	_vtol_vehicle_status = _attc->get_vtol_vehicle_status();
+	// MC/FW 虚拟消息是两套控制器并行产生的候选输入。
 	_vehicle_torque_setpoint_virtual_mc = _attc->get_vehicle_torque_setpoint_virtual_mc();
 	_vehicle_torque_setpoint_virtual_fw = _attc->get_vehicle_torque_setpoint_virtual_fw();
 	_vehicle_thrust_setpoint_virtual_mc = _attc->get_vehicle_thrust_setpoint_virtual_mc();
 	_vehicle_thrust_setpoint_virtual_fw = _attc->get_vehicle_thrust_setpoint_virtual_fw();
+	// instance 0/1 是经过 VTOL 构型选择和坐标映射后的最终输出。
 	_torque_setpoint_0 = _attc->get_torque_setpoint_0();
 	_torque_setpoint_1 = _attc->get_torque_setpoint_1();
 	_thrust_setpoint_0 = _attc->get_thrust_setpoint_0();
@@ -100,6 +111,7 @@ void VtolType::parameters_update()
 void VtolType::update_mc_state()
 {
 	// copy virtual attitude setpoint to real attitude setpoint
+	// 稳定悬停时无需重新生成姿态：直接采用 MC 位置/姿态链给出的候选目标。
 	memcpy(_v_att_sp, _mc_virtual_att_sp, sizeof(vehicle_attitude_setpoint_s));
 
 	_mc_roll_weight = 1.0f;
@@ -110,15 +122,17 @@ void VtolType::update_mc_state()
 
 void VtolType::update_fw_state()
 {
+	// 保存固定翼控制器最新 +body-X 推力；若马上进入后转换，可用它填补 MC 控制器接管空窗。
 	_last_thr_in_fw_mode =  _vehicle_thrust_setpoint_virtual_fw->xyz[0];
 
 	// copy virtual attitude setpoint to real attitude setpoint
+	// 稳定 FW 状态直接采用 fw_lateral_longitudinal_control 生成的姿态/推力目标。
 	memcpy(_v_att_sp, _fw_virtual_att_sp, sizeof(vehicle_attitude_setpoint_s));
 	_mc_roll_weight = 0.0f;
 	_mc_pitch_weight = 0.0f;
 	_mc_yaw_weight = 0.0f;
 
-	// tecs didn't publish an update yet after the transition
+	// 前转换刚结束时，旧 tecs_status 可能来自转换前，不能视为 FW 纵向控制已经接管。
 	if (_tecs_status->timestamp < _trans_finished_ts) {
 		_tecs_running = false;
 
@@ -127,7 +141,7 @@ void VtolType::update_fw_state()
 		_tecs_running_ts = hrt_absolute_time();
 	}
 
-	// TECS didn't publish yet or the position controller didn't publish yet AFTER tecs
+	// TECS 没更新，或 TECS 更新后 FW 姿态目标还没更新：继续执行派生类 waiting_on_tecs()。
 	// only wait on TECS we're in a mode where it is actually running
 	if ((!_tecs_running || (_tecs_running && _fw_virtual_att_sp->timestamp <= _tecs_running_ts))
 	    && _v_control_mode->flag_control_altitude_enabled) {
@@ -136,6 +150,7 @@ void VtolType::update_fw_state()
 		_throttle_blend_start_ts = hrt_absolute_time();
 
 	} else if (shouldBlendThrottleAfterFrontTransition()) {
+		// TECS/FW 输出就绪后，在规定时间内由最后 MC 推力平滑过渡到 FW 推力。
 		const float progress = (float)(hrt_absolute_time() - _throttle_blend_start_ts) * 1e-6f / THROTTLE_BLENDING_DUR_S;
 
 		if (progress >= 1.0f) {
@@ -151,16 +166,19 @@ void VtolType::update_fw_state()
 
 void VtolType::update_transition_state()
 {
+	// 计算转换控制周期并限幅，避免调度异常使状态推进或保护逻辑突变。
 	hrt_abstime t_now = hrt_absolute_time();
 	_transition_dt = (float)(t_now - _last_loop_ts) / 1e6f;
 	_transition_dt = math::constrain(_transition_dt, 0.0001f, 0.02f);
 	_last_loop_ts = t_now;
 	_throttle_blend_start_ts = t_now;
 
+	// 所有尾座式转换姿态都按“从转换开始到现在”的绝对进度生成，而非逐步积分。
 	_time_since_trans_start = (float)(t_now - _transition_start_timestamp) * 1e-6f;
 
 	check_quadchute_condition();
 
+	// 保存 MC 负 body-Z 推力，供刚进入 FW、TECS 尚未接管时保持电机连续运转。
 	_last_thr_in_mc = _vehicle_thrust_setpoint_virtual_mc->xyz[2];
 }
 
@@ -199,6 +217,7 @@ bool VtolType::can_transition_on_ground()
 
 void VtolType::resetTransitionStates()
 {
+	// 每次开始前/后转换都重建计时和起始高度，供转换轨迹与高度损失保护使用。
 	_transition_start_timestamp = hrt_absolute_time();
 	_time_since_trans_start = 0.f;
 	_local_position_z_start_of_transition = _local_pos->z;

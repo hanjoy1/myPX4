@@ -38,6 +38,9 @@
 
 #include "ekf.h"
 
+// 中文导读：光流融合状态机。检查图像质量、倾角、离地距离和运动条件，完成陀螺补偿
+// 与传感器杆臂补偿，然后决定光流何时能够约束水平速度和地形高度。
+
 #include <ekf_derivation/generated/compute_flow_xy_innov_var_and_hx.h>
 
 void Ekf::controlOpticalFlowFusion(const imuSample &imu_delayed)

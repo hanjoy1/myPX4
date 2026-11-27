@@ -37,6 +37,9 @@
 
 #include "ekf.h"
 
+// 中文导读：光流观测模型把机体系角流率与水平速度、姿态及离地高度联系起来。
+// X/Y 图像轴顺序更新，可同时修正速度、姿态和 terrain 状态。
+
 #include <mathlib/mathlib.h>
 #include <float.h>
 #include <ekf_derivation/generated/compute_flow_xy_innov_var_and_hx.h>

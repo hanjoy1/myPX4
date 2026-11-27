@@ -41,6 +41,9 @@
 
 #include "ekf.h"
 
+// 中文导读：这里集中放置各观测源共用的基础操作，包括全球原点、状态 reset、
+// 创新统计、通用标量观测更新、惯性失算判定和 IMU 零偏学习抑制。
+
 #include <mathlib/mathlib.h>
 #include <lib/world_magnetic_model/geo_mag_declination.h>
 #include <cstdlib>
@@ -735,6 +738,8 @@ uint16_t Ekf::get_ekf_soln_status() const
 
 void Ekf::fuse(const VectorState &K, float innovation)
 {
+	// 用 K*innovation 修正全部误差状态。姿态误差通过小角度旋转注入四元数，
+	// 速度、位置和各偏置状态则可直接修正。
 	// quat_nominal
 	Quatf delta_quat(matrix::AxisAnglef(K.slice<State::quat_nominal.dof, 1>(State::quat_nominal.idx,
 					    0) * (-1.f * innovation)));
@@ -1091,6 +1096,8 @@ void Ekf::fuseDirectStateMeasurement(const float innov, const float innov_var, c
 
 bool Ekf::measurementUpdate(VectorState &K, const VectorState &H, const float R, const float innovation)
 {
+	// 通用一维 EKF 更新：由 H、P、R 求创新方差和增益，完成数值检查、
+	// 协方差更新及误差状态注入。
 	clearInhibitedStateKalmanGains(K);
 
 #if false

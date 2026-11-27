@@ -36,6 +36,9 @@
  *
  * Parameters for launchdetection
  *
+ * 中文说明：固定翼发射检测参数定义。
+ * 这些参数决定手抛/弹射发射时的机体前向加速度阈值、持续时间和电机启动延迟。
+ *
  * @author Thomas Gubler <thomasgubler@gmail.com>
  */
 

@@ -36,6 +36,9 @@
  *
  * Parameters used by the attitude auto-tuner
  *
+ * 中文说明：固定翼姿态自整定参数定义。
+ * 这些参数控制自整定轴选择、激励幅值、频率范围、目标时间常数以及整定后的增益应用方式。
+ *
  * @author Mathieu Bresciani <mathieu@auterion.com>
  */
 

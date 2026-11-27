@@ -43,6 +43,9 @@
 
 #include "ekf.h"
 
+// 中文导读：三轴磁场观测更新。观测模型把 NED 地磁场和机体磁偏置旋转到机体系，
+// 因而可同时修正姿态、地球磁场状态和机体磁偏置；三轴按顺序融合。
+
 #include <ekf_derivation/generated/compute_mag_y_innov_var_and_h.h>
 #include <ekf_derivation/generated/compute_mag_z_innov_var_and_h.h>
 

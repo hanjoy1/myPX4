@@ -37,6 +37,9 @@
  */
 
 #include "ekf.h"
+
+// 中文导读：GNSS 主控制器。它消费通过质量检查的 GNSS 样本，建立全球/本地原点，
+// 生成水平位置与三轴速度创新，并根据超时、创新拒绝和其他辅助源决定启动、停止或 reset。
 #include <mathlib/mathlib.h>
 
 void Ekf::controlGpsFusion(const imuSample &imu_delayed)

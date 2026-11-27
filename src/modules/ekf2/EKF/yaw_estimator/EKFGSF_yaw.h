@@ -34,6 +34,10 @@
 #ifndef EKF_EKFGSF_YAW_H
 #define EKF_EKFGSF_YAW_H
 
+// 中文导读：每个 _ekf_gsf 模型状态为 [v_N, v_E, yaw]，P 为 3x3 协方差；
+// _model_weights 是模型后验概率。五个初始航向假设在出现水平速度激励后，
+// 通过速度创新逐渐筛选并合成为可信航向。
+
 #include <lib/mathlib/mathlib.h>
 #include <lib/matrix/matrix/math.hpp>
 

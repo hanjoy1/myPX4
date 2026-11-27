@@ -36,6 +36,10 @@
  *
  * Parameters defined by the fixed-wing rate control task
  *
+ * 中文说明：固定翼角速度控制参数定义。
+ * 本文件参数主要影响角速度内环：三轴 PID/前馈增益、积分限幅、Acro 最大角速度、
+ * 空速缩放、随空速变化的舵面配平、手动直通缩放和不利偏航补偿。
+ *
  * @author Lorenz Meier <lorenz@px4.io>
  * @author Thomas Gubler <thomas@px4.io>
  */

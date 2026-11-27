@@ -36,6 +36,9 @@
  */
 
 #include "ekf.h"
+
+// 中文导读：terrain 是地面在本地 NED 系中的 D 方向位置；它与飞行器 D 位置
+// 的差给出离地高度 HAGL。测距仪和光流可约束它，无观测时使用弱假观测。
 #include "ekf_derivation/generated/compute_hagl_innov_var.h"
 
 #include <mathlib/mathlib.h>

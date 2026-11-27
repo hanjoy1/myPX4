@@ -35,6 +35,10 @@
  * @file mc_att_control_params.c
  * Parameters for multicopter attitude controller.
  *
+ * 中文阅读提示：
+ * 这里定义多旋翼姿态控制器相关参数。姿态控制器输出的是角速度设定值，
+ * 所以姿态 P 增益可以理解为“1 rad 姿态误差对应多少 rad/s 角速度命令”。
+ *
  * @author Lorenz Meier <lorenz@px4.io>
  * @author Anton Babushkin <anton@px4.io>
  */
@@ -43,6 +47,9 @@
  * Roll P gain
  *
  * Roll proportional gain, i.e. desired angular speed in rad/s for error 1 rad.
+ *
+ * 中文：Roll 姿态比例增益。roll 姿态误差为 1 rad 时，期望产生多少 rad/s 的 roll rate setpoint。
+ * 增大该值会让 roll 姿态跟踪更快，但过大可能引起振荡或角速度控制饱和。
  *
  * @min 0.0
  * @max 12
@@ -57,6 +64,9 @@ PARAM_DEFINE_FLOAT(MC_ROLL_P, 4.0f);
  *
  * Pitch proportional gain, i.e. desired angular speed in rad/s for error 1 rad.
  *
+ * 中文：Pitch 姿态比例增益。pitch 姿态误差为 1 rad 时，期望产生多少 rad/s 的 pitch rate setpoint。
+ * 作用和 MC_ROLL_P 类似，只是作用在 pitch 轴。
+ *
  * @min 0.0
  * @max 12
  * @decimal 2
@@ -69,6 +79,9 @@ PARAM_DEFINE_FLOAT(MC_PITCH_P, 4.0f);
  * Yaw P gain
  *
  * Yaw proportional gain, i.e. desired angular speed in rad/s for error 1 rad.
+ *
+ * 中文：Yaw 姿态比例增益。yaw 姿态误差为 1 rad 时，期望产生多少 rad/s 的 yaw rate setpoint。
+ * yaw 通道控制能力通常弱于 roll/pitch，调参时要注意不要过激。
  *
  * @min 0.0
  * @max 5
@@ -88,6 +101,12 @@ PARAM_DEFINE_FLOAT(MC_YAW_P, 2.8f);
  *
  * For yaw control tuning use MC_YAW_P. This ratio has no impact on the yaw gain.
  *
+ * 中文：Yaw 权重，用于在非线性姿态控制中相对 roll/pitch 降低 yaw 的优先级。
+ * 多旋翼 yaw 控制力通常小于 roll/pitch，而且悬停和三维导航更依赖推力方向，
+ * 因此控制器会优先保证 roll/pitch，也就是优先保证机体 z 轴/推力方向。
+ *
+ * 注意：调 yaw 闭环快慢应使用 MC_YAW_P；该权重主要影响姿态误差分解中的 yaw 优先级。
+ *
  * @min 0.0
  * @max 1.0
  * @decimal 2
@@ -105,6 +124,10 @@ PARAM_DEFINE_FLOAT(MC_YAW_WEIGHT, 0.4f);
  *
  * This is not only limited by the vehicle's properties, but also by the maximum
  * measurement rate of the gyro.
+ *
+ * 中文：Roll 角速度设定值上限，作用于手动和自动模式，Acro 除外。
+ * 大角度姿态误差时，该限制可以避免姿态 P 环输出过大导致 mixer 饱和。
+ * 实际可设上限不仅受机体能力限制，也受陀螺仪最大测量速率限制。
  *
  * @unit deg/s
  * @min 0.0
@@ -125,6 +148,9 @@ PARAM_DEFINE_FLOAT(MC_ROLLRATE_MAX, 220.0f);
  * This is not only limited by the vehicle's properties, but also by the maximum
  * measurement rate of the gyro.
  *
+ * 中文：Pitch 角速度设定值上限，作用和 MC_ROLLRATE_MAX 类似，只是作用在 pitch 轴。
+ * 大角度姿态误差或自动模式快速姿态变化时，该值限制输出给 rate controller 的 pitch rate setpoint。
+ *
  * @unit deg/s
  * @min 0.0
  * @max 1800.0
@@ -136,6 +162,9 @@ PARAM_DEFINE_FLOAT(MC_PITCHRATE_MAX, 220.0f);
 
 /**
  * Max yaw rate
+ *
+ * 中文：Yaw 角速度设定值上限，限制姿态控制器输出的 yaw rate setpoint。
+ * yaw 通道容易受电机/桨反扭矩能力限制，过大可能导致饱和。
  *
  * @unit deg/s
  * @min 0.0
@@ -150,6 +179,9 @@ PARAM_DEFINE_FLOAT(MC_YAWRATE_MAX, 200.0f);
  * Manual tilt input filter time constant
  *
  * Setting this parameter to 0 disables the filter
+ *
+ * 中文：手动 roll/pitch 倾角输入的一阶滤波时间常数。
+ * 设为 0 表示禁用滤波，摇杆输入会更直接；增大该值会让手动倾角变化更平滑但响应更慢。
  *
  * @unit s
  * @min 0.0

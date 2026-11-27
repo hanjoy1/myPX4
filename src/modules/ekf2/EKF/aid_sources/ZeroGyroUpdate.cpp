@@ -33,6 +33,9 @@
 
 #include "ZeroGyroUpdate.hpp"
 
+// 中文导读：机体静止时将角速度为零作为伪观测，用于收敛陀螺仪零偏；
+// 运动中不能使用该约束，否则真实角速度会被错误吸收到零偏状态。
+
 #include "../ekf.h"
 
 ZeroGyroUpdate::ZeroGyroUpdate()

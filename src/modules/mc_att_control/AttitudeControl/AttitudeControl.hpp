@@ -36,6 +36,16 @@
  *
  * A quaternion based attitude controller.
  *
+ * 中文阅读提示：
+ * 这个类只做“姿态误差 -> 机体系角速度设定值”的计算。
+ * 它不处理 uORB、不处理推力、不直接控制电机。
+ *
+ * 控制思想：
+ * - 当前姿态 q 与期望姿态 qd 都用单位四元数表示。
+ * - 先优先对齐机体 z 轴，也就是优先保证推力方向，对应 roll/pitch。
+ * - yaw 误差可以用 yaw_weight 降权，因为多旋翼 yaw 控制能力通常弱于 roll/pitch。
+ * - 最终四元数误差转换为 body rate setpoint，交给角速度控制器继续闭环。
+ *
  * @author Matthias Grob	<maetugr@gmail.com>
  *
  * Publication documenting the implemented Quaternion Attitude Control:
@@ -59,21 +69,29 @@ public:
 
 	/**
 	 * Set proportional attitude control gain
+	 * 设置姿态 P 环增益。
 	 * @param proportional_gain 3D vector containing gains for roll, pitch, yaw
+	 * @param proportional_gain roll/pitch/yaw 三轴比例增益，单位可理解为 rad 姿态误差对应 rad/s 角速度
 	 * @param yaw_weight A fraction [0,1] deprioritizing yaw compared to roll and pitch
+	 * @param yaw_weight yaw 权重 [0,1]，用于相对 roll/pitch 降低 yaw 优先级
 	 */
 	void setProportionalGain(const matrix::Vector3f &proportional_gain, const float yaw_weight);
 
 	/**
 	 * Set hard limit for output rate setpoints
+	 * 设置输出角速度设定值的硬限幅。
 	 * @param rate_limit [rad/s] 3D vector containing limits for roll, pitch, yaw
+	 * @param rate_limit [rad/s] roll/pitch/yaw 三轴角速度上限
 	 */
 	void setRateLimit(const matrix::Vector3f &rate_limit) { _rate_limit = rate_limit; }
 
 	/**
 	 * Set a new attitude setpoint replacing the one tracked before
+	 * 设置新的姿态设定值，替换之前跟踪的目标姿态。
 	 * @param qd desired vehicle attitude setpoint
+	 * @param qd 期望飞机姿态四元数
 	 * @param yawspeed_setpoint [rad/s] yaw feed forward angular rate in world frame
+	 * @param yawspeed_setpoint [rad/s] 世界坐标系 z 轴上的 yaw rate 前馈
 	 */
 	void setAttitudeSetpoint(const matrix::Quatf &qd, const float yawspeed_setpoint)
 	{
@@ -85,7 +103,10 @@ public:
 	/**
 	 * Adjust last known attitude setpoint by a delta rotation
 	 * Optional use to avoid glitches when attitude estimate reference e.g. heading changes.
+	 * 用一个增量旋转修正最近一次姿态设定值。
+	 * 典型用途：EKF 航向/姿态参考发生 reset 时，同步旋转旧 setpoint，避免控制输出突变。
 	 * @param q_delta delta rotation to apply
+	 * @param q_delta 要施加到旧姿态设定值上的增量旋转
 	 */
 	void adaptAttitudeSetpoint(const matrix::Quatf &q_delta)
 	{
@@ -95,16 +116,19 @@ public:
 
 	/**
 	 * Run one control loop cycle calculation
+	 * 执行一次姿态 P 环计算。
 	 * @param q estimation of the current vehicle attitude unit quaternion
+	 * @param q 当前飞机姿态估计，单位四元数
 	 * @return [rad/s] body frame 3D angular rate setpoint vector to be executed by the rate controller
+	 * @return [rad/s] 机体系 roll/pitch/yaw 角速度设定值，交给 rate controller 执行
 	 */
 	matrix::Vector3f update(const matrix::Quatf &q) const;
 
 private:
-	matrix::Vector3f _proportional_gain;
-	matrix::Vector3f _rate_limit;
-	float _yaw_w{0.f}; ///< yaw weight [0,1] to deprioritize caompared to roll and pitch
+	matrix::Vector3f _proportional_gain; ///< 姿态 P 环增益，输出角速度设定值
+	matrix::Vector3f _rate_limit; ///< 角速度设定值限幅
+	float _yaw_w{0.f}; ///< yaw 权重 [0,1]，相对 roll/pitch 降低 yaw 优先级
 
-	matrix::Quatf _attitude_setpoint_q; ///< latest known attitude setpoint e.g. from position control
-	float _yawspeed_setpoint{0.f}; ///< latest known yawspeed feed-forward setpoint
+	matrix::Quatf _attitude_setpoint_q; ///< 最近一次期望姿态，例如来自位置控制器
+	float _yawspeed_setpoint{0.f}; ///< 最近一次 yaw rate 前馈设定值
 };

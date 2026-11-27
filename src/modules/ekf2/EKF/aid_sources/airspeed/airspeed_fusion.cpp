@@ -44,6 +44,9 @@
 
 #include "ekf.h"
 
+// 中文导读：真空速观测约束“地速减风速”的模长，因此主要修正水平风和速度状态。
+// 只有空速足够大且数据健康时才融合，以避免低速下观测模型退化。
+
 #include <ekf_derivation/generated/compute_airspeed_h.h>
 #include <ekf_derivation/generated/compute_airspeed_innov_and_innov_var.h>
 #include <ekf_derivation/generated/compute_wind_init_and_cov_from_airspeed.h>

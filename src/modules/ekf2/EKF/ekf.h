@@ -43,6 +43,10 @@
 #ifndef EKF_EKF_H
 #define EKF_EKF_H
 
+// 中文导读：Ekf 是主误差状态滤波器。_state 保存名义状态，P 保存误差状态协方差；
+// control_status 表示启用的辅助源。公开接口供 EKF2 模块送入数据和读取结果，
+// 私有接口实现预测、融合控制、误差注入和故障恢复。
+
 #include "estimator_interface.h"
 
 #if defined(CONFIG_EKF2_GNSS)

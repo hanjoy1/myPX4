@@ -37,6 +37,9 @@
  */
 
 #include "ekf.h"
+
+// 中文导读：磁力计融合状态机。它检查磁场强度/倾角、传感器切换和飞行阶段，选择
+// 航向融合、三轴磁场融合或仅初始化模式，并在磁干扰时停用或重置磁相关状态。
 #include <mathlib/mathlib.h>
 
 #include <lib/world_magnetic_model/geo_mag_declination.h>

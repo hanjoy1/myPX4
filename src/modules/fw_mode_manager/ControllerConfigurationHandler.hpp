@@ -49,6 +49,12 @@ static constexpr lateral_control_configuration_s empty_lateral_control_configura
 
 class CombinedControllerConfigurationHandler
 {
+	/*
+	 * 收集单个控制周期内临时的控制器配置覆盖量。
+	 *
+	 * FixedWingModeManager 在计算不同模式时可以设置俯仰、油门、空速和横向限制；
+	 * 周期末由该辅助类把发生变化的配置消息发布给 fw_lateral_longitudinal_control。
+	 */
 public:
 	CombinedControllerConfigurationHandler() = default;
 	~CombinedControllerConfigurationHandler() = default;

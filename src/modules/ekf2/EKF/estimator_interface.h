@@ -42,6 +42,9 @@
 #ifndef EKF_ESTIMATOR_INTERFACE_H
 #define EKF_ESTIMATOR_INTERFACE_H
 
+// 中文导读：EstimatorInterface 定义 EKF 的全部传感器输入、延迟缓冲区和时间基准。
+// 它负责采样、降采样与时间对齐，不负责判断观测健康状态或执行卡尔曼更新。
+
 #if defined(MODULE_NAME)
 #include <px4_platform_common/log.h>
 # define ECL_INFO PX4_DEBUG

@@ -38,6 +38,9 @@
 
 #include "ekf.h"
 
+// 中文导读：视觉水平位置融合。负责把 LOCAL_NED、LOCAL_FRD 等输入统一到 EKF NED，
+// 处理位置传感器偏置，并在视觉坐标 reset 或融合超时时重置水平位置。
+
 static constexpr const char *EV_AID_SRC_NAME = "EV position";
 
 

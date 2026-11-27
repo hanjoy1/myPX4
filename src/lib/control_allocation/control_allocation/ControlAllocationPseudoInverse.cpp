@@ -62,7 +62,20 @@ void
 ControlAllocationPseudoInverse::updatePseudoInverse()
 {
 	if (_mix_update_needed) {
+		// static int debug_pinv_print_count = 0;
+		// const bool debug_pinv_print = debug_pinv_print_count < 5;
+
+		// if (debug_pinv_print) {
+		// 	printf("\n[control_allocation][pinv] _effectiveness before geninv:\n");
+		// 	_effectiveness.print();
+		// }
+
 		matrix::geninv(_effectiveness, _mix);
+
+		// if (debug_pinv_print) {
+		// 	printf("[control_allocation][pinv] _mix after geninv, before normalization:\n");
+		// 	_mix.print();
+		// }
 
 		if (!_metric_allocation) {
 			if (_normalization_needs_update && !_had_actuator_failure) {
@@ -70,8 +83,19 @@ ControlAllocationPseudoInverse::updatePseudoInverse()
 				_normalization_needs_update = false;
 			}
 
+			// if (debug_pinv_print) {
+			// 	printf("[control_allocation][pinv] _control_allocation_scale:\n");
+			// 	_control_allocation_scale.print();
+			// }
+
 			normalizeControlAllocationMatrix();
+
+			// if (debug_pinv_print) {
+			// 	printf("[control_allocation][pinv] _mix after normalization:\n");
+			// 	_mix.print();
+			// }
 		}
+
 
 		_mix_update_needed = false;
 	}
@@ -186,4 +210,24 @@ ControlAllocationPseudoInverse::allocate()
 
 	// Allocate
 	_actuator_sp = _actuator_trim + _mix * (_control_sp - _control_trim);
+
+	// static int debug_print_count = 0;
+
+	// if (debug_print_count < 5) {
+	// 	printf("\n[control_allocation] _actuator_sp = _actuator_trim + _mix * (_control_sp - _control_trim)\n");
+	// 	printf("[control_allocation] _num_actuators: %d\n", _num_actuators);
+	// 	printf("[control_allocation] _mix:\n");
+	// 	_mix.print();
+	// 	printf("[control_allocation] _control_trim:\n");
+	// 	_control_trim.print();
+	// 	printf("[control_allocation] _actuator_trim:\n");
+	// 	_actuator_trim.print();
+	// 	printf("[control_allocation] _control_allocation_scale:\n");
+	// 	_control_allocation_scale.print();
+	// 	printf("[control_allocation] _control_sp:\n");
+	// 	_control_sp.print();
+	// 	printf("[control_allocation] _actuator_sp:\n");
+	// 	_actuator_sp.print();
+	// 	++debug_print_count;
+	// }
 }

@@ -28,6 +28,14 @@ PARAM_DEFINE_FLOAT(FW_PN_R_SLEW_MAX, 90.0f);
 PARAM_DEFINE_FLOAT(FW_GND_SPD_MIN, 5.0f);
 
 
+/*
+ * 中文说明：固定翼横纵向控制参数定义。
+ *
+ * 本文件参数主要影响 TECS 纵向能量控制、空速/高度滤波、爬升/下降限制、
+ * 横向空速方向控制、最小地速保护和风补偿。复现固定翼外环时，这些参数需要
+ * 与 PX4 保持一致，否则 TECS 输出的俯仰/油门和横向滚转设定会明显不同。
+ */
+
 
 
 // ----------longitudinal params----------

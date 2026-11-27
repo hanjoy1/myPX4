@@ -37,6 +37,9 @@
  */
 
 #include "ekf.h"
+
+// 中文导读：风状态只有 N/E 两维，由空速、零侧滑或多旋翼阻力观测提供可观性。
+// 本文件负责风状态及协方差的初始化和重置，具体观测更新位于 aid_sources。
 #include <ekf_derivation/generated/compute_wind_init_and_cov_from_wind_speed_and_direction.h>
 
 void Ekf::resetWindToExternalObservation(float wind_speed, float wind_direction, float wind_speed_accuracy,

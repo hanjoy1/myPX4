@@ -154,6 +154,13 @@ static constexpr float kStickDeadBand = 0.06f;
 class FixedWingModeManager final : public ModuleBase<FixedWingModeManager>, public ModuleParams,
 	public px4::WorkItem
 {
+	/*
+	 * 固定翼制导与飞行阶段状态机。
+	 *
+	 * 将任务、手动、Offboard 和导航输入转换为 FwLateralLongitudinalControl
+	 * 消费的两个 setpoint 总线；同时管理发射检测、跑道起飞、降落、襟翼、
+	 * 扰流板和起落架命令。
+	 */
 public:
 	FixedWingModeManager();
 	~FixedWingModeManager() override;

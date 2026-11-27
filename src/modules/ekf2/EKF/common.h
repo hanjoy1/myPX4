@@ -50,6 +50,10 @@
 namespace estimator
 {
 
+// 中文导读：本文件定义算法层的公共数据契约。imuSample、gnssSample、baroSample 等
+// 是经 EKF2 模块转换后的内部样本；Frame 枚举说明坐标系，Ctrl 枚举对应参数位掩码。
+// 阅读融合代码时，应先在这里确认样本的单位、方向和时间戳语义。
+
 using matrix::AxisAnglef;
 using matrix::Dcmf;
 using matrix::Eulerf;
@@ -514,8 +518,7 @@ union fault_status_u {
 		bool bad_hdg           : 1; ///< 3 - true if the fusion of the heading angle has encountered a numerical error
 		bool bad_mag_decl      : 1; ///< 4 - true if the fusion of the magnetic declination has encountered a numerical error
 		bool bad_airspeed      : 1; ///< 5 - true if fusion of the airspeed has encountered a numerical error
-bool bad_sideslip      :
-		1; ///< 6 - true if fusion of the synthetic sideslip constraint has encountered a numerical error
+		bool bad_sideslip      : 1; ///< 6 - true if fusion of the synthetic sideslip constraint has encountered a numerical error
 		bool bad_optflow_X     : 1; ///< 7 - true if fusion of the optical flow X axis has encountered a numerical error
 		bool bad_optflow_Y     : 1; ///< 8 - true if fusion of the optical flow Y axis has encountered a numerical error
 		bool __UNUSED          : 1; ///< 9 -
@@ -558,8 +561,7 @@ union filter_control_status_u {
 		uint64_t in_air                  : 1; ///< 7 - true when the vehicle is airborne
 		uint64_t wind                    : 1; ///< 8 - true when wind velocity is being estimated
 		uint64_t baro_hgt                : 1; ///< 9 - true when baro data is being fused
-uint64_t rng_hgt                 :
-		1; ///< 10 - true when range finder data is being fused for height aiding
+		uint64_t rng_hgt                 : 1; ///< 10 - true when range finder data is being fused for height aiding
 		uint64_t gps_hgt                 : 1; ///< 11 - true when GPS altitude is being fused
 		uint64_t ev_pos                  : 1; ///< 12 - true when local position data fusion from external vision is intended
 		uint64_t ev_yaw                  : 1; ///< 13 - true when yaw data from external vision measurements fusion is intended
@@ -567,38 +569,26 @@ uint64_t rng_hgt                 :
 		uint64_t fuse_beta               : 1; ///< 15 - true when synthetic sideslip measurements are being fused
 		uint64_t mag_field_disturbed     : 1; ///< 16 - true when the mag field does not match the expected strength
 		uint64_t fixed_wing              : 1; ///< 17 - true when the vehicle is operating as a fixed wing vehicle
-uint64_t mag_fault               :
-		1; ///< 18 - true when the magnetometer has been declared faulty and is no longer being used
+		uint64_t mag_fault               : 1; ///< 18 - true when the magnetometer has been declared faulty and is no longer being used
 		uint64_t fuse_aspd               : 1; ///< 19 - true when airspeed measurements are being fused
-uint64_t gnd_effect              :
-		1; ///< 20 - true when protection from ground effect induced static pressure rise is active
-uint64_t rng_stuck               :
-		1; ///< 21 - true when rng data wasn't ready for more than 10s and new rng values haven't changed enough
-uint64_t gnss_yaw                 :
-		1; ///< 22 - true when yaw (not ground course) data fusion from a GPS receiver is intended
+		uint64_t gnd_effect              : 1; ///< 20 - true when protection from ground effect induced static pressure rise is active
+		uint64_t rng_stuck               : 1; ///< 21 - true when rng data wasn't ready for more than 10s and new rng values haven't changed enough
+		uint64_t gnss_yaw                : 1; ///< 22 - true when yaw (not ground course) data fusion from a GPS receiver is intended
 		uint64_t mag_aligned_in_flight   : 1; ///< 23 - true when the in-flight mag field alignment has been completed
-uint64_t ev_vel                  :
-		1; ///< 24 - true when local frame velocity data fusion from external vision measurements is intended
-uint64_t synthetic_mag_z         :
-		1; ///< 25 - true when we are using a synthesized measurement for the magnetometer Z component
+		uint64_t ev_vel                  : 1; ///< 24 - true when local frame velocity data fusion from external vision measurements is intended
+		uint64_t synthetic_mag_z         : 1; ///< 25 - true when we are using a synthesized measurement for the magnetometer Z component
 		uint64_t vehicle_at_rest         : 1; ///< 26 - true when the vehicle is at rest
-uint64_t gnss_yaw_fault           :
-		1; ///< 27 - true when the GNSS heading has been declared faulty and is no longer being used
-uint64_t rng_fault               :
-		1; ///< 28 - true when the range finder has been declared faulty and is no longer being used
-uint64_t inertial_dead_reckoning :
-		1; ///< 29 - true if we are no longer fusing measurements that constrain horizontal velocity drift
+		uint64_t gnss_yaw_fault          : 1; ///< 27 - true when the GNSS heading has been declared faulty and is no longer being used
+		uint64_t rng_fault               : 1; ///< 28 - true when the range finder has been declared faulty and is no longer being used
+		uint64_t inertial_dead_reckoning : 1; ///< 29 - true if we are no longer fusing measurements that constrain horizontal velocity drift
 		uint64_t wind_dead_reckoning     : 1; ///< 30 - true if we are navigationg reliant on wind relative measurements
 		uint64_t rng_kin_consistent      : 1; ///< 31 - true when the range finder kinematic consistency check is passing
 		uint64_t fake_pos                : 1; ///< 32 - true when fake position measurements are being fused
 		uint64_t fake_hgt                : 1; ///< 33 - true when fake height measurements are being fused
 		uint64_t gravity_vector          : 1; ///< 34 - true when gravity vector measurements are being fused
-uint64_t mag                     :
-		1; ///< 35 - true if 3-axis magnetometer measurement fusion (mag states only) is intended
-uint64_t ev_yaw_fault            :
-		1; ///< 36 - true when the EV heading has been declared faulty and is no longer being used
-uint64_t mag_heading_consistent  :
-		1; ///< 37 - true when the heading obtained from mag data is declared consistent with the filter
+		uint64_t mag                     : 1; ///< 35 - true if 3-axis magnetometer measurement fusion (mag states only) is intended
+		uint64_t ev_yaw_fault            : 1; ///< 36 - true when the EV heading has been declared faulty and is no longer being used
+		uint64_t mag_heading_consistent  : 1; ///< 37 - true when the heading obtained from mag data is declared consistent with the filter
 		uint64_t aux_gpos                : 1; ///< 38 - true if auxiliary global position measurement fusion is intended
 		uint64_t rng_terrain             : 1; ///< 39 - true if we are fusing range finder data for terrain
 		uint64_t opt_flow_terrain        : 1; ///< 40 - true if we are fusing flow data for terrain
@@ -606,11 +596,9 @@ uint64_t mag_heading_consistent  :
 		uint64_t constant_pos            : 1; ///< 42 - true if the vehicle is at a constant position
 		uint64_t baro_fault              : 1; ///< 43 - true when the baro has been declared faulty and is no longer being used
 		uint64_t gnss_vel                : 1; ///< 44 - true if GNSS velocity measurement fusion is intended
-uint64_t gnss_fault              :
-		1; ///< 45 - true if GNSS measurements (lat, lon, vel) have been declared faulty and are no longer used
+		uint64_t gnss_fault              : 1; ///< 45 - true if GNSS measurements (lat, lon, vel) have been declared faulty and are no longer used
 		uint64_t yaw_manual              : 1; ///< 46 - true if yaw has been reset manually
-uint64_t gnss_hgt_fault              :
-		1; ///< 47 - true if GNSS measurements (alt) have been declared faulty and are no longer used
+		uint64_t gnss_hgt_fault          : 1; ///< 47 - true if GNSS measurements (alt) have been declared faulty and are no longer used
 	} flags;
 	uint64_t value;
 };

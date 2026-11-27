@@ -34,6 +34,8 @@
  * @file FigureEight.hpp
  * Helper class for lateral fixed wing position controller when flying a figure 8 loiter pattern.
  *
+ * 中文说明：8 字航线生成器接口。该类维护当前 8 字航段、几何参数和制导状态，
+ * 为固定翼横向控制提供与普通航线一致的制导输出。
  */
 
 #ifndef FIGUREEIGHT_HPP_
@@ -49,6 +51,12 @@
 
 class FigureEight : public ModuleParams
 {
+	/*
+	 * 8 字航线路径生成器。
+	 *
+	 * 它维护路径几何、当前航段和制导状态；输出与 fixed_wing_lateral_setpoint
+	 * 兼容，因此下游横向/纵向控制器不需要专门识别 8 字模式。
+	 */
 public:
 	/**
 	 * @brief Figure eight pattern points strust

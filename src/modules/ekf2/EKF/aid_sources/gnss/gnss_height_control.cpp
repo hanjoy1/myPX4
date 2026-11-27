@@ -38,6 +38,9 @@
 
 #include "ekf.h"
 
+// 中文导读：把 GNSS 椭球/海拔高度转换到 EKF 高度基准，估计与当前参考源的偏置，
+// 再形成垂直位置创新；它还处理 GNSS 高度作为参考源时的启动、超时和 reset。
+
 void Ekf::controlGnssHeightFusion(const gnssSample &gps_sample)
 {
 	static constexpr const char *HGT_SRC_NAME = "GNSS";

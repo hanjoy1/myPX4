@@ -40,6 +40,9 @@
 
 #include <aid_sources/range_finder/sensor_range_finder.hpp>
 
+// 中文导读：测距数据包装层，处理安装俯仰、最大倾角、质量滞回、雾距离抑制、
+// 有效量程和时间戳，为上层提供统一的健康量测。
+
 #include <lib/matrix/matrix/math.hpp>
 
 namespace estimator

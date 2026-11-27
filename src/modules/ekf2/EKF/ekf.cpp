@@ -35,6 +35,10 @@
  * @file ekf.cpp
  * Core functions for ekf attitude and position estimator.
  *
+ * 中文导读：本文件是主 EKF 的时间推进入口。update() 从延迟 IMU 缓冲区取样，
+ * 依次执行协方差预测、名义状态预测、观测融合调度，最后用 OutputPredictor
+ * 把延迟融合结果修正到当前时刻。初读建议按 update() -> predictState() 阅读。
+ *
  * @author Roman Bast <bapstroman@gmail.com>
  * @author Paul Riseborough <p_riseborough@live.com.au>
  */
@@ -136,6 +140,8 @@ void Ekf::reset()
 
 bool Ekf::update()
 {
+	// 主 EKF 工作在“延迟融合时刻”：取缓冲区最旧的 IMU，使有延迟的外部观测
+	// 能够与同一时刻的惯性状态对齐。
 	// Only run the filter if IMU data in the buffer has been updated
 	if (_imu_updated) {
 		_imu_updated = false;
@@ -179,11 +185,11 @@ bool Ekf::update()
 
 		updateIMUBiasInhibit(imu_sample_delayed);
 
-		// perform state and covariance prediction for the main filter
+		// 先传播误差协方差，再传播名义状态；二者使用同一个延迟 IMU 样本。
 		predictCovariance(imu_sample_delayed);
 		predictState(imu_sample_delayed);
 
-		// control fusion of observation data
+		// 根据数据新鲜度、质量、参数和当前对准状态，调度所有观测源。
 		controlFusionModes(imu_sample_delayed);
 
 		_output_predictor.correctOutputStates(imu_sample_delayed.time_us, _state.quat_nominal, _state.vel, _gpos,
@@ -197,6 +203,7 @@ bool Ekf::update()
 
 bool Ekf::initialiseFilter()
 {
+	// 先依靠重力完成横滚/俯仰对准，随后才能建立有物理意义的初始协方差。
 	if (!initialiseTilt()) {
 		return false;
 	}
@@ -230,6 +237,8 @@ bool Ekf::initialiseTilt()
 
 void Ekf::predictState(const imuSample &imu_delayed)
 {
+	// 名义状态的捷联惯导传播：去零偏角增量更新姿态，去零偏速度增量转到
+	// NED 坐标系并计入重力，然后积分得到速度和位置。
 	if (std::fabs(_gpos.latitude_rad() - _earth_rate_lat_ref_rad) > math::radians(1.0)) {
 		_earth_rate_lat_ref_rad = _gpos.latitude_rad();
 		_earth_rate_NED = calcEarthRateNED((float)_earth_rate_lat_ref_rad);

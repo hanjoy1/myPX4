@@ -74,6 +74,12 @@ enum class SignalType : uint8_t {
 class FwAutotuneAttitudeControl : public ModuleBase<FwAutotuneAttitudeControl>, public ModuleParams,
 	public px4::WorkItem
 {
+	/*
+	 * 固定翼自整定监督器。
+	 *
+	 * 观测闭环响应，通过 autotune_attitude_control_status 请求注入激励，
+	 * 并把整定后的增益写回 PX4 参数。它与正常控制环并行运行，不替代正常控制环。
+	 */
 public:
 	FwAutotuneAttitudeControl(bool is_vtol);
 	~FwAutotuneAttitudeControl() override;

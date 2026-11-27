@@ -35,12 +35,19 @@
  * @file mc_acro_params.c
  *
  * Parameters for Acro mode behavior
+ *
+ * 中文阅读提示：
+ * Acro 模式没有姿态角闭环，摇杆直接映射为机体系角速度设定值。
+ * 这里的参数决定满杆最大角速度，以及摇杆曲线中位细腻程度和末端响应。
  */
 
 /**
  * Acro mode maximum roll rate
  *
  * Full stick deflection leads to this rate.
+ *
+ * 中文：Acro 模式 roll 满杆对应的最大 roll rate。
+ * 摇杆经过 expo/superexpo 曲线后再乘以该最大角速度。
  *
  * @unit deg/s
  * @min 0.0
@@ -56,6 +63,8 @@ PARAM_DEFINE_FLOAT(MC_ACRO_R_MAX, 100.f);
  *
  * Full stick deflection leads to this rate.
  *
+ * 中文：Acro 模式 pitch 满杆对应的最大 pitch rate。
+ *
  * @unit deg/s
  * @min 0.0
  * @max 1800.0
@@ -69,6 +78,8 @@ PARAM_DEFINE_FLOAT(MC_ACRO_P_MAX, 100.f);
  * Acro mode maximum yaw rate
  *
  * Full stick deflection leads to this rate.
+ *
+ * 中文：Acro 模式 yaw 满杆对应的最大 yaw rate。
  *
  * @unit deg/s
  * @min 0.0
@@ -87,6 +98,9 @@ PARAM_DEFINE_FLOAT(MC_ACRO_Y_MAX, 100.f);
  * 0 Purely linear input curve
  * 1 Purely cubic input curve
  *
+ * 中文：Acro 模式 roll/pitch expo 曲线因子。
+ * 0 表示完全线性；1 表示完全三次曲线。增大后摇杆中位附近更细腻，末端仍可达到最大角速度。
+ *
  * @min 0
  * @max 1
  * @decimal 2
@@ -101,6 +115,8 @@ PARAM_DEFINE_FLOAT(MC_ACRO_EXPO, 0.f);
  *
  * 0 Purely linear input curve
  * 1 Purely cubic input curve
+ *
+ * 中文：Acro 模式 yaw expo 曲线因子，作用和 MC_ACRO_EXPO 类似，但只影响 yaw 轴。
  *
  * @min 0
  * @max 1
@@ -118,6 +134,9 @@ PARAM_DEFINE_FLOAT(MC_ACRO_EXPO_Y, 0.f);
  * 0.7 reasonable shape enhancement for intuitive stick feel
  * 0.95 very strong bent input curve only near maxima have effect
  *
+ * 中文：Acro 模式 roll/pitch superexpo 因子，在 expo 基础上进一步调整曲线。
+ * 值越大，中位附近越柔和，接近满杆时角速度增长越快；过大时只有接近最大摇杆量才有明显输出。
+ *
  * @min 0
  * @max 0.95
  * @decimal 2
@@ -133,6 +152,8 @@ PARAM_DEFINE_FLOAT(MC_ACRO_SUPEXPO, 0.f);
  * 0 Pure Expo function
  * 0.7 reasonable shape enhancement for intuitive stick feel
  * 0.95 very strong bent input curve only near maxima have effect
+ *
+ * 中文：Acro 模式 yaw superexpo 因子，作用和 MC_ACRO_SUPEXPO 类似，但只影响 yaw 轴。
  *
  * @min 0
  * @max 0.95

@@ -38,6 +38,9 @@
 
 #include "aid_sources/gnss/gnss_checks.hpp"
 
+// 中文导读：GNSS 融合前置质量门。检查 fix 类型、卫星数、PDOP、报告精度、水平漂移、
+// 垂直漂移和速度一致性；滞回计时用于避免质量在阈值附近抖动时频繁启停融合。
+
 namespace estimator
 {
 bool GnssChecks::run(const gnssSample &gnss, uint64_t time_us)

@@ -33,6 +33,8 @@
 
 #include "ZeroVelocityUpdate.hpp"
 
+// 中文导读：落地且静止时融合 NED 三轴零速度，抑制惯性积分漂移并帮助 IMU 零偏收敛。
+
 #include "../ekf.h"
 
 ZeroVelocityUpdate::ZeroVelocityUpdate()

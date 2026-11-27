@@ -52,16 +52,17 @@ static constexpr float kFlapSlewRateVtol = 1.f; // minimum time from none to ful
 static constexpr float kSpoilerSlewRateVtol = 1.f; // minimum time from none to full spoiler deflection [s]
 
 
-// Has to match 1:1 msg/vtol_vehicle_status.msg
+// 所有 VTOL 构型共用的高层状态，数值必须与 msg/vtol_vehicle_status.msg 一一对应。
+// Tailsitter 内部更细的 MC/FW/前后转换状态最终都会映射到这里，供主模块统一调度。
 enum class mode {
-	TRANSITION_TO_FW = 1,
-	TRANSITION_TO_MC = 2,
-	ROTARY_WING = 3,
-	FIXED_WING = 4
+	TRANSITION_TO_FW = 1,  // 前转换：尾座式由 MC 姿态控制器跟踪转换目标
+	TRANSITION_TO_MC = 2,  // 后转换：尾座式同样由 MC 姿态控制器跟踪
+	ROTARY_WING = 3,       // 纯悬停/多旋翼状态
+	FIXED_WING = 4         // 纯固定翼状态
 };
 
 enum class vtol_type {
-	TAILSITTER = 0,
+	TAILSITTER = 0, // VT_TYPE=0 时主模块实例化 Tailsitter
 	TILTROTOR,
 	STANDARD
 };
@@ -76,7 +77,7 @@ enum VtolForwardActuationMode {
 	ENABLE_ABOVE_MPC_LAND_ALT2_WITHOUT_LAND
 };
 
-// enum for bitmask of VT_FW_DIFTHR_EN parameter options
+// VT_FW_DIFTHR_EN 位掩码：决定固定翼状态下哪些 FW 力矩可以通过电机差动实现。
 enum class VtFwDifthrEnBits : int32_t {
 	YAW_BIT = (1 << 0),
 	ROLL_BIT = (1 << 1),
@@ -100,6 +101,8 @@ class VtolType : public ModuleParams
 {
 public:
 
+	// att_controller 指向唯一的 VtolAttitudeControl 主对象。
+	// 构造函数通过主对象 getter 取得输入缓存和最终输出对象的地址，派生类不复制这些消息。
 	VtolType(VtolAttitudeControl *att_controller);
 	VtolType(const VtolType &) = delete;
 	VtolType &operator=(const VtolType &) = delete;
@@ -118,21 +121,25 @@ public:
 
 	/**
 	 * Update transition state.
+	 * 尾座式重载后生成前/后转换目标姿态；基类部分维护时间、推力记忆和 quadchute。
 	 */
 	virtual void update_transition_state() = 0;
 
 	/**
 	 * Update multicopter state.
+	 * 将 MC 虚拟姿态目标复制为最终 vehicle_attitude_setpoint。
 	 */
 	virtual void update_mc_state();
 
 	/**
 	 * Update fixed wing state.
+	 * 将 FW 虚拟姿态目标复制为最终目标，并处理 TECS 延迟接管和 quadchute。
 	 */
 	virtual void update_fw_state();
 
 	/**
 	 * Write control values to actuator output topics.
+	 * 派生类通过下方四个输出指针填写主模块的 torque/thrust instance 0/1 消息。
 	 */
 	virtual void fill_actuator_outputs() = 0;
 
@@ -265,31 +272,38 @@ public:
 	void handleEkfResets();
 
 protected:
-	VtolAttitudeControl *_attc;
-	mode _common_vtol_mode;
+	VtolAttitudeControl *_attc; // 非拥有型指针：指向创建本对象的 VTOL 主模块
+	mode _common_vtol_mode;     // 映射后的通用状态，供 VtolAttitudeControl::Run() 调度
 
 	static constexpr const int num_outputs_max = 8;
 
-	struct vehicle_attitude_s		*_v_att;				//vehicle attitude
-	struct vehicle_attitude_setpoint_s	*_v_att_sp;			//vehicle attitude setpoint
-	struct vehicle_attitude_setpoint_s *_mc_virtual_att_sp;	// virtual mc attitude setpoint
-	struct vehicle_attitude_setpoint_s *_fw_virtual_att_sp;	// virtual fw attitude setpoint
-	struct vehicle_control_mode_s		*_v_control_mode;	//vehicle control mode
-	struct vtol_vehicle_status_s 		*_vtol_vehicle_status;
-	struct vehicle_torque_setpoint_s 		*_vehicle_torque_setpoint_virtual_mc;
-	struct vehicle_torque_setpoint_s 		*_vehicle_torque_setpoint_virtual_fw;
-	struct vehicle_thrust_setpoint_s 		*_vehicle_thrust_setpoint_virtual_mc;
-	struct vehicle_thrust_setpoint_s 		*_vehicle_thrust_setpoint_virtual_fw;
-	struct vehicle_local_position_s			*_local_pos;
-	struct vehicle_local_position_setpoint_s	*_local_pos_sp;
+	/*
+	 * 以下均为非拥有型指针，全部指向 VtolAttitudeControl 中实际存储的消息对象。
+	 * 这样派生类能直接读主循环最新订阅值、写主循环稍后要发布的最终值，
+	 * 不需要在每个虚函数调用中传递大量参数，也不会产生两份不同步的消息副本。
+	 */
+	struct vehicle_attitude_s		*_v_att;			// EKF 当前姿态
+	struct vehicle_attitude_setpoint_s	*_v_att_sp;			// 最终统一姿态目标（主模块发布）
+	struct vehicle_attitude_setpoint_s *_mc_virtual_att_sp;	// MC 控制链候选姿态/推力目标
+	struct vehicle_attitude_setpoint_s *_fw_virtual_att_sp;	// FW 控制链候选姿态/推力目标
+	struct vehicle_control_mode_s		*_v_control_mode;	// 当前控制使能标志
+	struct vtol_vehicle_status_s 		*_vtol_vehicle_status;	// VTOL 状态和 FW 故障标志
+	struct vehicle_torque_setpoint_s 		*_vehicle_torque_setpoint_virtual_mc; // MC rate 输出
+	struct vehicle_torque_setpoint_s 		*_vehicle_torque_setpoint_virtual_fw; // FW rate 输出
+	struct vehicle_thrust_setpoint_s 		*_vehicle_thrust_setpoint_virtual_mc; // MC -Z 推力
+	struct vehicle_thrust_setpoint_s 		*_vehicle_thrust_setpoint_virtual_fw; // FW +X 推力
+	struct vehicle_local_position_s			*_local_pos;		// 高度/转换保护使用
+	struct vehicle_local_position_setpoint_s	*_local_pos_sp;		// 位置目标/辅助逻辑使用
 	struct airspeed_validated_s 			*_airspeed_validated;					// airspeed
 	struct tecs_status_s				*_tecs_status;
 	struct vehicle_land_detected_s			*_land_detected;
 
-	struct vehicle_torque_setpoint_s 		*_torque_setpoint_0;
-	struct vehicle_torque_setpoint_s 		*_torque_setpoint_1;
-	struct vehicle_thrust_setpoint_s 		*_thrust_setpoint_0;
-	struct vehicle_thrust_setpoint_s 		*_thrust_setpoint_1;
+	// 最终输出消息地址：Tailsitter::fill_actuator_outputs() 写入，
+	// VtolAttitudeControl::Run() 随后通过 PublicationMulti 发布同一对象。
+	struct vehicle_torque_setpoint_s 		*_torque_setpoint_0; // instance 0，主要用于电机
+	struct vehicle_torque_setpoint_s 		*_torque_setpoint_1; // instance 1，主要用于舵面
+	struct vehicle_thrust_setpoint_s 		*_thrust_setpoint_0; // instance 0 推力
+	struct vehicle_thrust_setpoint_s 		*_thrust_setpoint_1; // instance 1 推力（尾座式通常为零）
 
 	float _mc_roll_weight = 1.0f;	// weight for multicopter attitude controller roll output
 	float _mc_pitch_weight = 1.0f;	// weight for multicopter attitude controller pitch output
@@ -298,15 +312,15 @@ protected:
 
 	// motors spinning up or cutting too fast when doing transitions.
 	float _thrust_transition = 0.0f;	// thrust value applied during a front transition (tailsitter & tiltrotor only)
-	float _last_thr_in_fw_mode = 0.0f;
-	float _last_thr_in_mc = 0.f;
+	float _last_thr_in_fw_mode = 0.0f; // 最近一次 FW +body-X 推力，用于后转换连续接管
+	float _last_thr_in_mc = 0.f;       // 最近一次 MC -body-Z 推力，用于前转换完成后的连续接管
 
-	hrt_abstime _trans_finished_ts = 0;
-	hrt_abstime _transition_start_timestamp{0};
-	float _time_since_trans_start{0};
+	hrt_abstime _trans_finished_ts = 0;         // 最近一次前转换完成时间
+	hrt_abstime _transition_start_timestamp{0}; // 当前前/后转换开始时间
+	float _time_since_trans_start{0};           // 当前转换已持续秒数
 
-	bool _tecs_running = false;
-	hrt_abstime _tecs_running_ts = 0;
+	bool _tecs_running = false;        // 前转换后是否已经收到新的 TECS 状态
+	hrt_abstime _tecs_running_ts = 0;  // TECS 首次恢复的时刻，用于确认 FW 姿态目标也已更新
 
 	hrt_abstime _last_loop_ts = 0;
 	float _transition_dt = 0;

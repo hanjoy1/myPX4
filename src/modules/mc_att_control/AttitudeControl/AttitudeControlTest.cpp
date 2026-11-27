@@ -37,6 +37,7 @@
 
 using namespace matrix;
 
+// 基础零输入测试：默认控制器、当前姿态为单位四元数、没有姿态误差时，输出角速度应为 0。
 TEST(AttitudeControlTest, AllZeroCase)
 {
 	AttitudeControl attitude_control;
@@ -56,18 +57,23 @@ public:
 	void checkConvergence()
 	{
 		int i; // need function scope to check how many steps
+		// 记录上一轮输出，用于检查控制输出是否逐步减小。
 		Vector3f rate_setpoint(1000.f, 1000.f, 1000.f);
 
 		_attitude_control.setAttitudeSetpoint(_quat_goal, 0.f);
 
 		for (i = 100; i > 0; i--) {
 			// run attitude control to get rate setpoints
+			// 执行姿态控制，得到角速度设定值。
 			const Vector3f rate_setpoint_new = _attitude_control.update(_quat_state);
 			// rotate the simulated state quaternion according to the rate setpoint
+			// 用角速度设定值简单积分/旋转模拟当前姿态向目标姿态靠近。
 			_quat_state = _quat_state * Quatf(AxisAnglef(rate_setpoint_new));
 			_quat_state = -_quat_state; // produce intermittent antipodal quaternion states to test against unwinding problem
+			// 故意交替使用对跖四元数 -q，验证控制器不会出现 unwinding 问题。
 
 			// expect the error and hence also the output to get smaller with each iteration
+			// 姿态误差应该逐步收敛，因此角速度输出模长也应该逐步变小。
 			if (rate_setpoint_new.norm() >= rate_setpoint.norm()) {
 				break;
 			}
@@ -77,6 +83,7 @@ public:
 
 		EXPECT_EQ(_quat_state.canonical(), _quat_goal.canonical());
 		// it shouldn't have taken longer than an iteration timeout to converge
+		// 100 次迭代内应该完成收敛。
 		EXPECT_GT(i, 0);
 	}
 
@@ -87,6 +94,7 @@ public:
 
 TEST_F(AttitudeControlConvergenceTest, AttitudeControlConvergence)
 {
+	// 使用多个典型/极端四元数组合，枚举当前姿态和目标姿态，验证姿态控制能收敛。
 	const int inputs = 8;
 
 	const Quatf QArray[inputs] = {
@@ -115,6 +123,7 @@ TEST_F(AttitudeControlConvergenceTest, AttitudeControlConvergence)
 TEST(AttitudeControlTest, YawWeightScaling)
 {
 	// GIVEN: default tuning and pure yaw turn command
+	// 给定默认调参和纯 yaw 姿态命令。
 	AttitudeControl attitude_control;
 	const float yaw_gain = 2.8f;
 	const float yaw_sp = .1f;
@@ -124,17 +133,22 @@ TEST(AttitudeControlTest, YawWeightScaling)
 	attitude_control.setAttitudeSetpoint(pure_yaw_attitude, 0.f);
 
 	// WHEN: we run one iteration of the controller
+	// 执行一轮姿态控制。
 	Vector3f rate_setpoint = attitude_control.update(Quatf());
 
 	// THEN: no actuation in roll, pitch
+	// 纯 yaw 命令不应产生 roll/pitch 角速度输出。
 	EXPECT_EQ(Vector2f(rate_setpoint), Vector2f());
 	// THEN: actuation error * gain in yaw
+	// yaw 输出应等于 yaw 误差乘 yaw 增益，说明 yaw_weight 的内部补偿没有改变小误差 yaw 增益。
 	EXPECT_NEAR(rate_setpoint(2), yaw_sp * yaw_gain, 1e-4f);
 
 	// GIVEN: additional corner case of zero yaw weight
+	// 额外测试 yaw_weight = 0 的边界情况。
 	attitude_control.setProportionalGain(Vector3f(6.5f, 6.5f, yaw_gain), 0.f);
 	// WHEN: we run one iteration of the controller
 	rate_setpoint = attitude_control.update(Quatf());
 	// THEN: no actuation (also no NAN)
+	// yaw 权重为 0 时不应输出控制，也不能产生 NaN。
 	EXPECT_EQ(rate_setpoint, Vector3f());
 }

@@ -37,6 +37,9 @@
  */
 
 #include "ekf.h"
+
+// 中文导读：外部视觉总调度器。先处理视觉坐标系、姿态 reset 计数和传感器安装位置，
+// 再将同一帧样本分派给位置、速度、高度和航向四个独立控制器。
 #include "aid_sources/external_vision/ev_vel.h"
 
 void Ekf::controlExternalVisionFusion(const imuSample &imu_sample)

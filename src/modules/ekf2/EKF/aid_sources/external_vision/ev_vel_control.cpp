@@ -37,6 +37,9 @@
  */
 
 #include "ekf.h"
+
+// 中文导读：视觉速度融合。根据消息声明的 NED、FRD 或机体系坐标完成旋转和杆臂补偿，
+// 然后生成三轴速度创新；坐标系处理是阅读本文件的重点。
 #include "aid_sources/external_vision/ev_vel.h"
 #include "ekf_derivation/generated/compute_body_vel_innov_var_h.h"
 #include "ekf_derivation/generated/compute_body_vel_y_innov_var.h"

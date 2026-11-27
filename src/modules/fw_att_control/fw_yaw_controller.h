@@ -35,6 +35,9 @@
  * @file fw_yaw_controller.h
  * Definition of a simple coordinated turn controller.
  *
+ * 中文说明：固定翼协调转弯偏航控制器接口。
+ * 根据滚转、俯仰和空速计算协调转弯所需偏航角速度，而不是跟踪绝对偏航角。
+ *
  * Acknowledgements:
  *
  *   The control design is based on a design

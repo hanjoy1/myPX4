@@ -33,6 +33,10 @@
 
 #include "EKF2Selector.hpp"
 
+// 中文导读：多 EKF 模式下，各 EKF2 实例发布 estimator_*。本选择器监控健康度、
+// 创新检验比和 IMU 一致性，选出主实例后转发为系统使用的 vehicle_* topic。
+// 切换时还会修正 reset 信息，使下游控制器能够识别估计源变化。
+
 using namespace time_literals;
 using matrix::Quatf;
 using matrix::Vector2f;
@@ -109,6 +113,8 @@ void EKF2Selector::PrintInstanceChange(const uint8_t old_instance, uint8_t new_i
 
 bool EKF2Selector::SelectInstance(uint8_t ekf_instance)
 {
+	// 先发布对应传感器 device_id，再切换 callback，最后清空相对评分历史，
+	// 防止旧评分立即触发反向切换。
 	if ((ekf_instance != _selected_instance) && (ekf_instance < _available_instances)) {
 		// update sensor_selection immediately
 		sensor_selection_s sensor_selection{};
@@ -146,7 +152,8 @@ bool EKF2Selector::SelectInstance(uint8_t ekf_instance)
 
 bool EKF2Selector::UpdateErrorScores()
 {
-	// first check imu inconsistencies
+	// 先检查原始 IMU 间一致性。累计误差而非瞬时阈值可过滤振动和单次尖峰；
+	// 只有存在足够冗余传感器时，才可能可靠识别离群者。
 	_gyro_fault_detected = false;
 	uint32_t faulty_gyro_id = 0;
 	_accel_fault_detected = false;
@@ -363,6 +370,7 @@ bool EKF2Selector::UpdateErrorScores()
 
 void EKF2Selector::PublishVehicleAttitude()
 {
+	// 转发主实例姿态，并在实例切换造成姿态差异时更新 quaternion reset 信息。
 	// selected estimator_attitude -> vehicle_attitude
 	vehicle_attitude_s attitude;
 
@@ -417,6 +425,8 @@ void EKF2Selector::PublishVehicleAttitude()
 
 void EKF2Selector::PublishVehicleLocalPosition()
 {
+	// 切换实例时计算新旧 NED 状态差并累加 reset counter，让控制器将变化视为
+	// 坐标 reset，而不是飞行器真实瞬移。
 	// selected estimator_local_position -> vehicle_local_position
 	vehicle_local_position_s local_position;
 
@@ -699,6 +709,8 @@ void EKF2Selector::PublishWindEstimate()
 
 void EKF2Selector::Run()
 {
+	// 周期流程：更新评分 -> 确保主实例存在 -> 必要时切换 -> 转发主实例输出。
+	// 健康主实例不会因为很小的评分差而频繁切换。
 	// check for parameter updates
 	if (_parameter_update_sub.updated()) {
 		// clear update
@@ -709,10 +721,10 @@ void EKF2Selector::Run()
 		updateParams();
 	}
 
-	// update combined test ratio for all estimators
+	// 综合各创新检验比，并更新每个实例相对当前主实例的累计误差。
 	const bool updated = UpdateErrorScores();
 
-	// if no valid instance then force select first instance with valid IMU
+	// 启动阶段尚无主实例时，先选择具有有效加速度计和陀螺仪的实例。
 	if (_selected_instance == INVALID_INSTANCE) {
 		for (uint8_t i = 0; i < EKF2_MAX_INSTANCES; i++) {
 			if ((_instance[i].accel_device_id != 0)

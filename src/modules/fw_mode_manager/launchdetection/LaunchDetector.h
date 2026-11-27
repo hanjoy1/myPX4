@@ -52,6 +52,12 @@ static constexpr float kInfoDelay = 4.f;
 
 class __EXPORT LaunchDetector : public ModuleParams
 {
+	/*
+	 * 固定翼手抛/弹射发射检测器。
+	 *
+	 * 输入为 dt 和机体前向加速度；输出 launch_detection_status，以及
+	 * FixedWingModeManager 起飞逻辑使用的内部检测状态。
+	 */
 public:
 	LaunchDetector(ModuleParams *parent) : ModuleParams(parent) {}
 	~LaunchDetector() = default;

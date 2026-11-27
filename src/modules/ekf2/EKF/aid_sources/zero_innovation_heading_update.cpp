@@ -38,6 +38,9 @@
 
 #include "ekf.h"
 
+// 中文导读：以零创新执行航向协方差更新，只降低相关不确定度而不改变名义航向；
+// 这不等同于融合一个新的绝对航向测量。
+
 void Ekf::controlZeroInnovationHeadingUpdate()
 {
 	const bool yaw_aiding = _control_status.flags.mag_hdg || _control_status.flags.mag_3D

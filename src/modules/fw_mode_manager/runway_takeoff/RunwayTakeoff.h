@@ -34,6 +34,9 @@
  * @file RunwayTakeoff.h
  * Runway takeoff handling for fixed-wing UAVs with steerable wheels.
  *
+ * 中文说明：跑道起飞状态机接口。FixedWingModeManager 通过该类查询当前阶段下
+ * 应使用的俯仰、滚转、油门和前轮转向约束。
+ *
  * @author Roman Bapst <roman@px4.io>
  * @author Andreas Antener <andreas@uaventure.com>
  */
@@ -62,6 +65,12 @@ enum RunwayTakeoffState {
 
 class __EXPORT RunwayTakeoff : public ModuleParams
 {
+	/*
+	 * 跑道起飞状态机封装。
+	 *
+	 * 输入为空速、高度、时间和起飞参数；输出通过 getPitch/getRoll/getThrottle
+	 * 等访问器提供给模式管理器，再由模式管理器生成固定翼横纵向 setpoint。
+	 */
 public:
 	RunwayTakeoff(ModuleParams *parent) : ModuleParams(parent) {}
 	~RunwayTakeoff() = default;

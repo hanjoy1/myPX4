@@ -471,6 +471,12 @@ ControlAllocator::update_effectiveness_matrix_if_needed(EffectivenessUpdateReaso
 	}
 
 	if (_actuator_effectiveness->getEffectivenessMatrix(config, reason)) {
+
+		// for (int i = 0; i < _num_control_allocation; ++i) {
+		// PX4_INFO("Effectiveness matrix E[%d], num_actuators=%d", i, config.num_actuators_matrix[i]);
+		// config.effectiveness_matrices[i].print();
+		// }
+
 		_last_effectiveness_update = hrt_absolute_time();
 
 		memcpy(_control_allocation_selection_indexes, config.matrix_selection_indexes,

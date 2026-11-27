@@ -34,6 +34,9 @@
 /**
  * @file fw_pitch_controller.h
  * Definition of a simple pitch P controller.
+ *
+ * 中文说明：固定翼俯仰姿态外环控制器接口。
+ * 输入俯仰角设定、当前姿态和偏航欧拉角速度前馈；输出机体系俯仰角速度设定值。
  */
 
 #ifndef FW_PITCH_CONTROLLER_H

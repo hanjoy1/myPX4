@@ -37,8 +37,12 @@
 
 #include "ekf.h"
 
+// 中文导读：高度方向可同时存在气压计、GNSS、测距仪和外部视觉。本文件选择
+// 高度参考源、处理故障切换并监测垂直加速度异常；具体观测模型位于 aid_sources。
+
 void Ekf::controlHeightFusion(const imuSample &imu_delayed)
 {
+	// 多个高度源可以同时提供观测，但参考源决定全局高度基准及故障切换策略。
 	checkVerticalAccelerationHealth(imu_delayed);
 
 #if defined(CONFIG_EKF2_BAROMETER)

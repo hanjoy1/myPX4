@@ -37,6 +37,9 @@
 
 #include <aid_sources/range_finder/range_finder_consistency_check.hpp>
 
+// 中文导读：比较测距变化率与 EKF 垂直速度，识别地面突变、遮挡或异常噪声；
+// 带滞回的统计检查可避免单个坏样本导致融合频繁切换。
+
 void RangeFinderConsistencyCheck::update(float dist_bottom, float dist_bottom_var, float vz, float vz_var,
 		bool horizontal_motion, uint64_t time_us)
 {

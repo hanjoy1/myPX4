@@ -38,6 +38,9 @@
 
 #include "ekf.h"
 
+// 中文导读：从视觉姿态提取航向观测，处理视觉坐标系和姿态 reset，并调用通用
+// yaw_fusion 完成标量航向更新。视觉航向可替代磁力计用于室内飞行。
+
 void Ekf::controlEvYawFusion(const imuSample &imu_sample, const extVisionSample &ev_sample,
 			     const bool common_starting_conditions_passing, const bool ev_reset, const bool quality_sufficient,
 			     estimator_aid_source1d_s &aid_src)

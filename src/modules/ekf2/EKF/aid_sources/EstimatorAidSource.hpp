@@ -34,6 +34,10 @@
 #ifndef EKF_ESTIMATOR_AID_SOURCE_HPP
 #define EKF_ESTIMATOR_AID_SOURCE_HPP
 
+// 中文导读：AidSource 是观测源的统一接口/诊断记录。具体观测状态结构保存 observation、
+// variance、innovation、innovation variance、test ratio、拒绝标志和最近融合时间，
+// 供控制逻辑、通用融合函数以及 EKF2 日志发布共同使用。
+
 #include <cstdint>
 
 #include <lib/matrix/matrix/math.hpp>

@@ -79,6 +79,13 @@ using namespace time_literals;
 class FixedwingRateControl final : public ModuleBase<FixedwingRateControl>, public ModuleParams,
 	public px4::ScheduledWorkItem
 {
+	/*
+	 * 固定翼机体系角速度环封装。
+	 *
+	 * 订阅 angular velocity、rate setpoint、control mode、vehicle status、
+	 * airspeed 以及分配器饱和反馈；发布归一化 vehicle_torque_setpoint 和
+	 * vehicle_thrust_setpoint。
+	 */
 public:
 	FixedwingRateControl(bool vtol = false);
 	~FixedwingRateControl() override;

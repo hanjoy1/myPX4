@@ -60,10 +60,37 @@ void MyDemo::Run()
 	perf_begin(_cycle_perf);
 
 	// main
-	if (_demo_bool) {
+	const hrt_abstime now = hrt_absolute_time();
+
+	if (_demo_bool && now - _last_demo_print >= 1_s) {
 		printf("Hello from my_demo module!\n");
 		printf("Demo float parameter value: %.2f\n", (double)_demo_float);
+		_last_demo_print = now;
 	}
+
+	static uint8_t last_arming_state{UINT8_MAX};
+	static uint8_t last_nav_state{vehicle_status_s::NAVIGATION_STATE_MAX};
+
+	vehicle_status_s status{};
+	if (_my_demo_sub.update(&status))
+	{
+		if (status.arming_state != last_arming_state
+		    || status.nav_state != last_nav_state) {
+			printf("Vehicle status updated: arming_state=%d, nav_state=%d\n", status.arming_state, status.nav_state);
+			last_arming_state = status.arming_state;
+			last_nav_state = status.nav_state;
+			_last_status_print = now;
+		}
+
+		my_demo_s my_demo_msg{};
+		my_demo_msg.timestamp = hrt_absolute_time();
+		my_demo_msg.x = 1.0f; // Example
+		my_demo_msg.y = 1.0f;    // Example
+		my_demo_msg.z = 1.0f;    // Example
+		_my_demo_pub.publish(my_demo_msg);
+	}
+
+
 
 	// reschedule backup
 	ScheduleDelayed(5000_ms);

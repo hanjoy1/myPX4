@@ -40,6 +40,9 @@
  */
 
 #include "ekf.h"
+
+// 中文导读：低动态时，归一化后的加速度计比力应与预测重力方向一致。该观测可辅助
+// 修正倾斜角和加速度计零偏；大机动或加速度幅值异常时必须抑制融合。
 #include <ekf_derivation/generated/compute_gravity_xyz_innov_var_and_hx.h>
 #include <ekf_derivation/generated/compute_gravity_y_innov_var_and_h.h>
 #include <ekf_derivation/generated/compute_gravity_z_innov_var_and_h.h>

@@ -37,6 +37,9 @@
  * covariance matrix
  * equations generated using EKF/python/ekf_derivation/main.py
  *
+ * 中文导读：P 表示误差状态协方差，而不是名义状态。本文件负责初始化和传播 P、
+ * 加入各状态过程噪声，并限制方差，避免浮点误差造成非对称、负方差或数值发散。
+ *
  * @author Roman Bast <bastroman@gmail.com>
  *
  */
@@ -51,6 +54,7 @@
 // Do not call before quaternion states have been initialised
 void Ekf::initialiseCovariance()
 {
+	// 先清除状态间相关性，再按传感器初始可信度设置各状态的对角方差。
 	P.zero();
 
 	resetQuatCov(0.f); // Start with no initial uncertainty to improve fine leveling through zero vel/pos fusion
@@ -112,7 +116,8 @@ void Ekf::initialiseCovariance()
 
 void Ekf::predictCovariance(const imuSample &imu_delayed)
 {
-	// predict the covariance
+	// 对应 P(k+1)=F P F^T+Q。运动学部分由生成代码计算，随机游走状态的
+	// 过程噪声在下方分别加入。
 	const float dt = 0.5f * (imu_delayed.delta_vel_dt + imu_delayed.delta_ang_dt);
 
 	// gyro noise variance
@@ -133,7 +138,7 @@ void Ekf::predictCovariance(const imuSample &imu_delayed)
 		}
 	}
 
-	// calculate variances and upper diagonal covariances for quaternion, velocity, position and gyro bias states
+	// 生成函数传播姿态误差、速度、位置和 IMU 零偏之间的完整互协方差。
 	P = sym::PredictCovariance(_state.vector(), P,
 				   imu_delayed.delta_vel / imu_delayed.delta_vel_dt, accel_var,
 				   imu_delayed.delta_ang / imu_delayed.delta_ang_dt, gyro_var,

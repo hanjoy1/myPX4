@@ -64,6 +64,10 @@
 
 using namespace time_literals;
 
+// 中文导读：Selector 不运行第二套 EKF，只保存各 EKF2 实例的健康摘要和订阅。
+// EstimatorInstance 是单实例账本；累计 IMU 不一致量和 relative_test_ratio
+// 用于区分传感器故障与普通估计波动。
+
 class EKF2Selector : public ModuleParams, public px4::ScheduledWorkItem
 {
 public:
@@ -98,6 +102,8 @@ private:
 
 	// Subscriptions (per estimator instance)
 	struct EstimatorInstance {
+		// 每个实例拥有独立 estimator_* 订阅和传感器 device_id。healthy 使用滞回，
+		// 避免短暂超时或单次创新异常立即触发切换。
 
 		EstimatorInstance(EKF2Selector *selector, uint8_t i) :
 			estimator_attitude_sub{selector, ORB_ID(estimator_attitude), i},
